@@ -11,6 +11,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/tdee',
+        destination: '/tdee.html',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

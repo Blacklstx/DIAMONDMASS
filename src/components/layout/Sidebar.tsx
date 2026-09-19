@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   BookOpen,
   ExternalLink,
+  Calculator,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -96,13 +97,27 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom section right above line */}
-      <div className="mt-auto pt-4">
+      <div className="mt-auto pt-4 space-y-2">
+        {/* TDEE Calculator Link */}
+        <a
+          href="/tdee.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] transition-colors group border border-[var(--border)] bg-[var(--cream-soft)]/50"
+        >
+          <div className="flex items-center gap-2.5">
+            <Calculator size={16} className="text-[var(--brown)]" />
+            <span>{language === 'th' ? 'คำนวณ TDEE' : 'TDEE Calculator'}</span>
+          </div>
+          <ExternalLink size={13} className="text-[var(--muted)] group-hover:text-[var(--brown-dark)] transition-colors" />
+        </a>
+
         {/* E-Book Link */}
         <a
           href="https://diamondmasszerotomassebook.netlify.app/"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] transition-colors group mb-3 border border-[var(--border)] bg-[var(--cream-soft)]/50"
+          className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] transition-colors group border border-[var(--border)] bg-[var(--cream-soft)]/50"
         >
           <div className="flex items-center gap-2.5">
             <BookOpen size={16} className="text-[var(--brown)]" />

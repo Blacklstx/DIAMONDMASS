@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Calculator } from 'lucide-react';
 
 export function MobileTopBar() {
   const { language, setLanguage } = useLanguage();
@@ -38,6 +38,16 @@ export function MobileTopBar() {
             <span>Admin</span>
           </Link>
         )}
+
+        <a
+          href="/tdee.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 rounded-full bg-[var(--cream)] px-2.5 py-1 text-[10px] font-bold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] border border-[var(--border)] transition-colors"
+        >
+          <Calculator size={11} className="text-[var(--brown)]" />
+          <span>TDEE</span>
+        </a>
 
         <a
           href="https://diamondmasszerotomassebook.netlify.app/"

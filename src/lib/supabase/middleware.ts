@@ -54,7 +54,8 @@ export async function updateSession(request: NextRequest) {
     const isPublicAsset =
       pathname.startsWith('/logo.png') ||
       pathname.startsWith('/_next') ||
-      pathname.startsWith('/favicon.ico');
+      pathname.startsWith('/favicon.ico') ||
+      pathname.startsWith('/tdee');
 
     // If unauthenticated and trying to access protected route -> redirect to /login
     if (!user && !isAuthRoute && !isCoachRoute && !isPublicAsset && pathname !== '/') {

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>คำนวณ TDEE — DIAMONDMASS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap');
+
+:root{
+  /* ===== DIAMONDMASS color theme: warm ivory / cream / brown ===== */
+  --paper:#F7F3E8;
+  --paper-light:#FFFDF7;
+  --cream:#EDE2C7;
+  --cream-soft:#F2EBDD;
+  --beige:#D8C6A3;
+  --brown:#6B5138;
+  --brown-dark:#33271E;
+  --text:#1F1C18;
+  --muted:#756A5D;
+  --line:#E1D5B8;
+
+  --rust:#8B4A32;
+  --gold:#A9822E;
+
+  --space-xs:8px;
+  --space-sm:16px;
+  --space-md:24px;
+  --space-lg:40px;
+
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth; scroll-padding-top: env(safe-area-inset-top, 0px);}
+html,body{
+  background:#EDE7D9;
+  color:var(--text);
+  font-family:"Inter","Noto Sans Thai","IBM Plex Sans Thai","Tahoma",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.8;
+}
+::selection{ background:var(--cream-soft); }
+
+.wrap{
+  max-width:1080px;
+  margin:0 auto;
+  padding:0 0 60px;
+}
+
+/* ===== PAGE HEADER (matches book brand lockup) ===== */
+.page-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:22px 24px 14px;
+  border-bottom:1px solid var(--line);
+  background:var(--paper-light);
+}
+.page-header .logo{ width:20px; }
+.page-header .brand-text{
+  font-size:11px;
+  letter-spacing:0.18em;
+  font-weight:700;
+  color:var(--brown);
+}
+
+.hero{
+  background:var(--paper-light);
+  padding:28px 24px 34px;
+  border-bottom:1px solid var(--line);
+}
+.hero-eyebrow{
+  font-size:9pt;
+  letter-spacing:0.25em;
+  color:var(--muted);
+  font-weight:700;
+  margin-bottom:10px;
+}
+.hero h1{
+  font-size:clamp(24px,4vw,34px);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:0.01em;
+  color:var(--brown-dark);
+  line-height:1.15;
+  max-width:16ch;
+}
+.hero-rule{
+  width:26mm; height:2px; background:var(--brown);
+  margin:14px 0;
+}
+.hero p.sub{
+  color:var(--muted);
+  max-width:60ch;
+  font-size:14px;
+}
+
+.unit-toggle{
+  display:inline-flex;
+  border:1px solid var(--line);
+  margin-top:16px;
+  background:var(--paper);
+}
+.unit-toggle button{
+  background:transparent; border:none;
+  color:var(--muted);
+  padding:8px 16px;
+  font:inherit; font-size:12.5px; font-weight:600;
+  letter-spacing:0.03em;
+  cursor:pointer;
+}
+.unit-toggle button + button{ border-left:1px solid var(--line); }
+.unit-toggle button[aria-pressed="true"]{
+  background:var(--brown); color:var(--paper-light);
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,0.95fr);
+  gap:0;
+  background:var(--paper-light);
+}
+@media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+.form-col{ padding:28px 24px; border-right:1px solid var(--line); }
+@media (max-width:860px){ .form-col{ border-right:none; border-bottom:1px solid var(--line); } }
+
+/* ===== SECTION HEAD (identical to book's section-head/badge/heading) ===== */
+.section-block{ margin-bottom:var(--space-lg); }
+.section-head{
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:var(--space-sm);
+  padding-bottom:10px;
+  border-bottom:2px solid var(--brown);
+}
+.section-badge{
+  font-size:22px; font-weight:900; color:var(--brown); min-width:34px;
+}
+.section-heading{
+  font-size:15px; font-weight:800; letter-spacing:0.01em; color:var(--brown-dark);
+}
+
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+label.field{ display:block; margin-bottom:16px; }
+label.field .label-text{
+  display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px; font-weight:600;
+}
+.input-num{ position:relative; }
+.input-num input{
+  width:100%; background:var(--paper); border:1px solid var(--line);
+  padding:11px 46px 11px 13px; font:inherit; font-size:16px; color:var(--text);
+  -moz-appearance:textfield;
+}
+.input-num input:focus{ outline:2px solid var(--brown); outline-offset:-1px; }
+.input-num input::-webkit-outer-spin-button, .input-num input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.input-num .unit{
+  position:absolute; right:13px; top:50%; transform:translateY(-50%);
+  color:var(--muted); font-size:12.5px; pointer-events:none;
+}
+
+.seg{ display:flex; border:1px solid var(--line); }
+.seg button{
+  flex:1; background:var(--paper); border:none; padding:10px 6px;
+  font:inherit; font-size:14px; color:var(--muted); cursor:pointer;
+}
+.seg button + button{ border-left:1px solid var(--line); }
+.seg button[aria-pressed="true"]{ background:var(--brown); color:var(--paper-light); }
+
+.activity-list{ border:1px solid var(--line); }
+.activity-row{
+  display:flex; align-items:center; gap:12px; padding:13px 14px;
+  cursor:pointer; background:var(--paper); border:none; width:100%;
+  text-align:left; font:inherit; color:var(--text);
+  border-left:3px solid transparent;
+}
+.activity-row + .activity-row{ border-top:1px solid var(--line); }
+.activity-row .dot{
+  width:9px; height:9px; border-radius:50%; border:1.5px solid var(--muted); flex-shrink:0;
+}
+.activity-row[aria-pressed="true"]{
+  background:var(--cream-soft); border-left:3px solid var(--brown);
+}
+.activity-row[aria-pressed="true"] .dot{ background:var(--brown); border-color:var(--brown); }
+.activity-row .txt strong{ display:block; font-size:14px; font-weight:700; color:var(--brown-dark); }
+.activity-row .txt span{ display:block; font-size:12px; color:var(--muted); margin-top:1px; }
+.activity-row .mult{ margin-left:auto; font-size:12.5px; color:var(--brown); font-weight:700; flex-shrink:0; }
+
+.bf-toggle{
+  display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted);
+  margin-top:-6px; margin-bottom:16px;
+}
+.bf-toggle input[type="checkbox"]{ width:15px; height:15px; accent-color:var(--brown); }
+#bfFieldWrap{ display:none; }
+#bfFieldWrap.show{ display:block; }
+
+.formula-note{
+  font-size:12px; color:var(--muted); border-top:1px dashed var(--line); padding-top:12px;
+}
+
+/* ===== REPORT (right column) ===== */
+.report-col{ padding:28px 24px; position:relative; }
+
+/* TDEE hero = key-takeaway callout, book-exact style */
+.key-takeaway{
+  background:var(--cream-soft);
+  border-left:4px solid var(--brown);
+  color:var(--brown-dark);
+  padding:22px 24px;
+  margin-bottom:var(--space-md);
+  text-align:center;
+}
+.key-takeaway .kt-label{
+  font-size:9px; letter-spacing:0.28em; color:var(--brown); margin-bottom:8px; font-weight:700;
+}
+.key-takeaway .kt-num{
+  font-size:clamp(38px,7vw,52px); font-weight:900; line-height:1; color:var(--brown-dark);
+}
+.key-takeaway .kt-num sup{ font-size:14px; font-weight:600; color:var(--muted); margin-left:4px; }
+
+.bmr-row{
+  display:flex; justify-content:space-between; align-items:baseline;
+  padding:12px 0; border-bottom:1px solid var(--line); margin-bottom:20px;
+}
+.bmr-row .m-label{ font-size:13px; color:var(--text); }
+.bmr-row .m-label small{ display:block; color:var(--muted); font-size:11px; margin-top:2px; font-weight:400; }
+.bmr-row .m-val{ font-weight:800; font-size:17px; color:var(--brown-dark); white-space:nowrap; }
+
+/* Goal cards = book's card-grid/card component, one column stack */
+.goal-cards{ display:grid; gap:12px; }
+.goal-card{
+  border:1px solid var(--line);
+  background:var(--cream-soft);
+  padding:16px 18px;
+  border-left:4px solid var(--brown);
+}
+.goal-card.cut{ border-left-color:var(--rust); }
+.goal-card.maintain{ border-left-color:var(--brown); }
+.goal-card.bulk{ border-left-color:var(--gold); }
+
+.goal-card .g-head{
+  display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;
+}
+.goal-card .g-head h3{
+  font-size:14.5px; font-weight:800; color:var(--brown-dark); text-transform:uppercase; letter-spacing:0.02em;
+}
+.goal-card .g-kcal{ font-weight:900; font-size:20px; }
+.goal-card.cut .g-kcal{ color:var(--rust); }
+.goal-card.maintain .g-kcal{ color:var(--brown); }
+.goal-card.bulk .g-kcal{ color:var(--gold); }
+.goal-card .g-delta{ font-size:11px; color:var(--muted); margin-bottom:10px; }
+
+.macro-bar{ display:flex; height:6px; margin-bottom:8px; background:var(--line); overflow:hidden; }
+.macro-bar span{ display:block; height:100%; }
+.macro-list{ display:flex; gap:14px; font-size:11.5px; color:var(--text); }
+.macro-list b{ display:block; font-size:13px; color:var(--brown-dark); }
+.macro-list .swatch{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; }
+
+/* ===== NOTE BOX (footer disclaimer, book-exact style) ===== */
+.note-box{
+  border:1px solid var(--beige);
+  background:var(--paper);
+  padding:16px 20px;
+  margin:0 24px 40px;
+}
+.note-box .nb-label{
+  font-size:8pt; letter-spacing:0.25em; font-weight:800; color:var(--brown); margin-bottom:6px;
+}
+.note-box .nb-text{ font-size:11.5px; line-height:1.8; color:var(--text); }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-header" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="/logo.png" class="logo" alt="Logo" style="width:24px;height:24px;object-fit:contain;">
+      <span class="brand-text">DIAMONDMASS&nbsp;&nbsp;/&nbsp;&nbsp;TDEE CALCULATOR</span>
+    </div>
+    <a href="/dashboard" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:9999px;font-size:11px;font-weight:700;color:var(--brown-dark);background:var(--cream);border:1px solid var(--line);text-decoration:none;cursor:pointer;">← กลับสู่ระบบ (Dashboard)</a>
+  </div>
+
+  <div class="hero">
+    <div class="hero-eyebrow">DIAMONDMASS TOOLS</div>
+    <h1>ร่างกายคุณเผาผลาญวันละเท่าไหร่</h1>
+    <div class="hero-rule"></div>
+    <p class="sub">กรอกข้อมูลของคุณ ระบบจะคำนวณ BMR และ TDEE แบบ real-time พร้อมแนะนำแคลอรี่และสัดส่วนสารอาหารตามเป้าหมาย</p>
+    <div class="unit-toggle" id="unitToggle">
+      <button type="button" data-unit="metric" aria-pressed="true">ก.ก. / ซ.ม.</button>
+      <button type="button" data-unit="imperial" aria-pressed="false">lb / ft-in</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- FORM -->
+    <div class="form-col">
+
+      <div class="section-block">
+        <div class="section-head">
+          <span class="section-badge">01</span>
+          <span class="section-heading">ข้อมูลพื้นฐาน</span>
+        </div>
+
+        <div class="row2">
+          <label class="field">
+            <span class="label-text">เพศ</span>
+            <div class="seg" id="sexSeg">
+              <button type="button" data-sex="male" aria-pressed="true">ชาย</button>
+              <button type="button" data-sex="female" aria-pressed="false">หญิง</button>
+            </div>
+          </label>
+          <label class="field">
+            <span class="label-text">อายุ</span>
+            <div class="input-num">
+              <input type="number" id="age" inputmode="numeric" min="10" max="90" value="25">
+              <span class="unit">ปี</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="row2">
+          <label class="field">
+            <span class="label-text" id="heightLabel">ส่วนสูง</span>
+            <div class="input-num">
+              <input type="number" id="height" inputmode="decimal" min="100" max="230" value="170">
+              <span class="unit" id="heightUnit">ซม.</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="label-text" id="weightLabel">น้ำหนัก</span>
+            <div class="input-num">
+              <input type="number" id="weight" inputmode="decimal" min="30" max="200" value="65">
+              <span class="unit" id="weightUnit">กก.</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="bf-toggle">
+          <input type="checkbox" id="bfToggle">
+          <label for="bfToggle">รู้เปอร์เซ็นต์ไขมัน — ใช้สูตร Katch-McArdle แม่นกว่าสำหรับคนที่กล้ามเยอะ</label>
+        </div>
+        <div id="bfFieldWrap">
+          <label class="field">
+            <span class="label-text">เปอร์เซ็นต์ไขมันร่างกาย</span>
+            <div class="input-num">
+              <input type="number" id="bodyfat" inputmode="decimal" min="3" max="60" value="20">
+              <span class="unit">%</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-head">
+          <span class="section-badge">02</span>
+          <span class="section-heading">ระดับกิจกรรมในแต่ละวัน</span>
+        </div>
+        <div class="activity-list" id="activityList">
+          <button type="button" class="activity-row" data-mult="1.2" aria-pressed="true">
+            <span class="dot"></span>
+            <span class="txt"><strong>แทบไม่ขยับตัว</strong><span>งานนั่งโต๊ะ ไม่ออกกำลังกาย</span></span>
+            <span class="mult">×1.20</span>
+          </button>
+          <button type="button" class="activity-row" data-mult="1.375" aria-pressed="false">
+            <span class="dot"></span>
+            <span class="txt"><strong>ขยับเบา ๆ</strong><span>ออกกำลังกาย 1–3 วัน/สัปดาห์</span></span>
+            <span class="mult">×1.375</span>
+          </button>
+          <button type="button" class="activity-row" data-mult="1.55" aria-pressed="false">
+            <span class="dot"></span>
+            <span class="txt"><strong>ขยับปานกลาง</strong><span>ออกกำลังกาย 3–5 วัน/สัปดาห์</span></span>
+            <span class="mult">×1.55</span>
+          </button>
+          <button type="button" class="activity-row" data-mult="1.725" aria-pressed="false">
+            <span class="dot"></span>
+            <span class="txt"><strong>ขยับหนัก</strong><span>ออกกำลังกาย 6–7 วัน/สัปดาห์</span></span>
+            <span class="mult">×1.725</span>
+          </button>
+          <button type="button" class="activity-row" data-mult="1.9" aria-pressed="false">
+            <span class="dot"></span>
+            <span class="txt"><strong>หนักมาก + งานใช้แรง</strong><span>ฝึกวันละ 2 รอบ หรืองานที่ใช้แรงกายตลอดวัน</span></span>
+            <span class="mult">×1.90</span>
+          </button>
+        </div>
+        <p class="formula-note">BMR คำนวณด้วยสูตร Mifflin-St Jeor เป็นค่าเริ่มต้น (หรือ Katch-McArdle ถ้าติ๊กเปอร์เซ็นต์ไขมันด้านบน) แล้วคูณด้วยตัวเลขกิจกรรมเพื่อได้ TDEE</p>
+      </div>
+
+    </div>
+
+    <!-- REPORT -->
+    <div class="report-col">
+
+      <div class="key-takeaway">
+        <div class="kt-label">พลังงานที่ใช้ทั้งวัน — TDEE</div>
+        <div class="kt-num"><span id="tdeeOut">0</span><sup>kcal</sup></div>
+      </div>
+
+      <div class="bmr-row">
+        <span class="m-label">อัตราเผาผลาญพื้นฐาน<small>BMR — พลังงานที่ใช้แม้นอนนิ่งทั้งวัน</small></span>
+        <span class="m-val"><span id="bmrOut">0</span> kcal</span>
+      </div>
+
+      <div class="goal-cards">
+
+        <div class="goal-card cut">
+          <div class="g-head"><h3>ลดไขมัน</h3><span class="g-kcal"><span id="cutKcal">0</span></span></div>
+          <div class="g-delta">TDEE −20% · ลดน้ำหนักประมาณ 0.5 กก./สัปดาห์</div>
+          <div class="macro-bar" id="cutBar"></div>
+          <div class="macro-list">
+            <span><span class="swatch" style="background:#6B5138"></span>โปรตีน<b><span id="cutP">0</span>ก.</b></span>
+            <span><span class="swatch" style="background:#8B4A32"></span>ไขมัน<b><span id="cutF">0</span>ก.</b></span>
+            <span><span class="swatch" style="background:#D8C6A3"></span>คาร์บ<b><span id="cutC">0</span>ก.</b></span>
+          </div>
+        </div>
+
+        <div class="goal-card maintain">
+          <div class="g-head"><h3>คงน้ำหนัก</h3><span class="g-kcal"><span id="maintainKcal">0</span></span></div>
+          <div class="g-delta">เท่ากับ TDEE — รักษาน้ำหนักตัวปัจจุบัน</div>
+          <div class="macro-bar" id="maintainBar"></div>
+          <div class="macro-list">
+            <span><span class="swatch" style="background:#6B5138"></span>โปรตีน<b><span id="mP">0</span>ก.</b></span>
+            <span><span class="swatch" style="background:#8B4A32"></span>ไขมัน<b><span id="mF">0</span>ก.</b></span>
+            <span><span class="swatch" style="background:#D8C6A3"></span>คาร์บ<b><span id="mC">0</span>ก.</b></span>
+          </div>
+        </div>
+
+        <div class="goal-card bulk">
+          <div class="g-head"><h3>เพิ่มกล้ามเนื้อ</h3><span class="g-kcal"><span id="bulkKcal">0</span></span></div>
+          <div class="g-delta">TDEE +12% · เพิ่มน้ำหนักประมาณ 0.25 กก./สัปดาห์</div>
+          <div class="macro-bar" id="bulkBar"></div>
+          <div class="macro-list">
+            <span><span class="swatch" style="background:#6B5138"></span>โปรตีน<b><span id="bP">0</span>ก.</b></span>
+            <span><span class="swatch" style="background:#8B4A32"></span>ไขมัน<b><span id="bF">0</span>ก.</b></span>
+            <span><span class="swatch" style="background:#D8C6A3"></span>คาร์บ<b><span id="bC">0</span>ก.</b></span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="note-box">
+    <div class="nb-label">หมายเหตุ</div>
+    <div class="nb-text">ตัวเลขที่ได้เป็นค่าประมาณสำหรับใช้เป็นจุดเริ่มต้นเท่านั้น ร่างกายแต่ละคนตอบสนองไม่เหมือนกัน แนะนำให้ชั่งน้ำหนักและวัดผลจริง 2–3 สัปดาห์แล้วปรับแคลอรี่ตามที่ร่างกายตอบสนอง สัดส่วนโปรตีนคำนวณจาก 1.8 ก./กก. (Katch: จาก LBM), ไขมัน 25% ของแคลอรี่รวม ส่วนที่เหลือคือคาร์โบไฮเดรต</div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  let unit = 'metric';
+  let sex = 'male';
+  let activityMult = 1.2;
+  const CM_PER_IN = 2.54;
+  const KG_PER_LB = 0.45359237;
+
+  const els = {
+    age: $('age'), height: $('height'), weight: $('weight'),
+    bfToggle: $('bfToggle'), bfWrap: $('bfFieldWrap'), bodyfat: $('bodyfat'),
+    heightLabel: $('heightLabel'), heightUnit: $('heightUnit'),
+    weightLabel: $('weightLabel'), weightUnit: $('weightUnit'),
+  };
+
+  document.getElementById('unitToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-unit]');
+    if (!btn) return;
+    const newUnit = btn.dataset.unit;
+    if (newUnit === unit) return;
+
+    let h = parseFloat(els.height.value) || 0;
+    let w = parseFloat(els.weight.value) || 0;
+    if (unit === 'metric' && newUnit === 'imperial') {
+      els.height.value = Math.round(h / CM_PER_IN);
+      els.weight.value = Math.round(w / KG_PER_LB);
+    } else if (unit === 'imperial' && newUnit === 'metric') {
+      els.height.value = Math.round(h * CM_PER_IN);
+      els.weight.value = Math.round(w * KG_PER_LB);
+    }
+    unit = newUnit;
+    document.querySelectorAll('#unitToggle button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+    els.heightLabel.textContent = unit === 'metric' ? 'ส่วนสูง' : 'ส่วนสูง (นิ้ว)';
+    els.heightUnit.textContent = unit === 'metric' ? 'ซม.' : 'นิ้ว';
+    els.weightLabel.textContent = 'น้ำหนัก';
+    els.weightUnit.textContent = unit === 'metric' ? 'กก.' : 'ปอนด์';
+    compute();
+  });
+
+  document.getElementById('sexSeg').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-sex]');
+    if (!btn) return;
+    sex = btn.dataset.sex;
+    document.querySelectorAll('#sexSeg button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+    compute();
+  });
+
+  document.getElementById('activityList').addEventListener('click', (e) => {
+    const btn = e.target.closest('.activity-row');
+    if (!btn) return;
+    activityMult = parseFloat(btn.dataset.mult);
+    document.querySelectorAll('.activity-row').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+    compute();
+  });
+
+  els.bfToggle.addEventListener('change', () => {
+    els.bfWrap.classList.toggle('show', els.bfToggle.checked);
+    compute();
+  });
+
+  ['age','height','weight','bodyfat'].forEach(id => { $(id).addEventListener('input', compute); });
+
+  function toCm(v) { return unit === 'metric' ? v : v * CM_PER_IN; }
+  function toKg(v) { return unit === 'metric' ? v : v * KG_PER_LB; }
+  function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+
+  function compute() {
+    const age = parseFloat(els.age.value) || 0;
+    const heightCm = toCm(parseFloat(els.height.value) || 0);
+    const weightKg = toKg(parseFloat(els.weight.value) || 0);
+    const useBF = els.bfToggle.checked;
+    const bf = parseFloat(els.bodyfat.value) || 0;
+
+    let bmr;
+    if (useBF && bf > 0) {
+      const lbm = weightKg * (1 - bf / 100);
+      bmr = 370 + 21.6 * lbm;
+    } else {
+      bmr = sex === 'male'
+        ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
+        : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+    }
+    bmr = Math.max(bmr, 0);
+    const tdee = bmr * activityMult;
+
+    $('bmrOut').textContent = fmt(bmr);
+    $('tdeeOut').textContent = fmt(tdee);
+
+    const cutKcal = tdee * 0.8;
+    const maintainKcal = tdee;
+    const bulkKcal = tdee * 1.12;
+
+    $('cutKcal').textContent = fmt(cutKcal);
+    $('maintainKcal').textContent = fmt(maintainKcal);
+    $('bulkKcal').textContent = fmt(bulkKcal);
+
+    applyMacros('cut', cutKcal, weightKg, 'cut');
+    applyMacros('m', maintainKcal, weightKg, 'maintain');
+    applyMacros('b', bulkKcal, weightKg, 'bulk');
+  }
+
+  function applyMacros(prefix, kcal, weightKg, barId) {
+    const proteinG = weightKg * 1.8;
+    const proteinKcal = proteinG * 4;
+    const fatKcal = kcal * 0.25;
+    const fatG = fatKcal / 9;
+    const carbKcal = Math.max(kcal - proteinKcal - fatKcal, 0);
+    const carbG = carbKcal / 4;
+
+    $(prefix + 'P').textContent = fmt(proteinG);
+    $(prefix + 'F').textContent = fmt(fatG);
+    $(prefix + 'C').textContent = fmt(carbG);
+
+    const total = proteinKcal + fatKcal + carbKcal || 1;
+    const bar = document.getElementById(barId + 'Bar');
+    if (bar) {
+      bar.innerHTML = `
+        <span style="width:${(proteinKcal/total*100).toFixed(1)}%; background:#6B5138"></span>
+        <span style="width:${(fatKcal/total*100).toFixed(1)}%; background:#8B4A32"></span>
+        <span style="width:${(carbKcal/total*100).toFixed(1)}%; background:#D8C6A3"></span>
+      `;
+    }
+  }
+
+  compute();
+})();
+</script>
+</body>
+</html>
