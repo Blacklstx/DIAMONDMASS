@@ -717,19 +717,19 @@ export function TraineeDetailModal({
 
             {/* Coach Share Link */}
             {trainee.coach_token && (
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--cream-soft)] p-3 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-extrabold text-[var(--brown-dark)]">
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--cream-soft)] p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                <div className="min-w-0 flex-1">
+                  <span className="font-extrabold text-[var(--brown-dark)] block">
                     ลิงก์รายงานแบบอ่านอย่างเดียวของลูกเทรนคนนี้:
                   </span>
-                  <div className="text-[11px] text-[var(--muted)] font-mono truncate max-w-md">
+                  <div className="text-[11px] text-[var(--muted)] font-mono truncate mt-0.5">
                     /coach/{trainee.coach_token}
                   </div>
                 </div>
                 <Link
                   href={`/coach/${trainee.coach_token}`}
                   target="_blank"
-                  className="btn primary small flex items-center gap-1.5 shrink-0"
+                  className="btn primary small flex items-center justify-center gap-1.5 shrink-0 w-full sm:w-auto text-xs"
                 >
                   <span>เปิดดูรายงานเต็ม</span>
                   <ExternalLink size={13} />
@@ -753,7 +753,7 @@ export function TraineeDetailModal({
                   {actionError}
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -761,7 +761,7 @@ export function TraineeDetailModal({
                     setShowResetConfirm(true);
                   }}
                   disabled={Boolean(processingAction)}
-                  className="rounded-xl border border-amber-300 bg-white px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-50 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                  className="rounded-xl border border-amber-300 bg-white px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-50 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex-1 sm:flex-initial"
                 >
                   <RotateCcw size={14} className="text-amber-600" />
                   <span>{t('admin_reset_data')}</span>
@@ -773,7 +773,7 @@ export function TraineeDetailModal({
                     setShowDeleteConfirm(true);
                   }}
                   disabled={Boolean(processingAction)}
-                  className="rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-red-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                  className="rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-red-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex-1 sm:flex-initial"
                 >
                   <Trash2 size={14} />
                   <span>{t('admin_delete_user')}</span>

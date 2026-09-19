@@ -7,7 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { createClient } from '@/lib/supabase/client';
 import { Camera, ChevronRight } from 'lucide-react';
 
-type PhotoView = 'all' | 'front' | 'left' | 'right' | 'back';
+type PhotoView = 'front' | 'left' | 'right' | 'back';
 
 export default function PhotosPage() {
   const { user, checkins } = useAuth();
@@ -23,7 +23,6 @@ export default function PhotosPage() {
     { id: 'left', label: t('ph_left') },
     { id: 'right', label: t('ph_right') },
     { id: 'back', label: t('ph_back') },
-    { id: 'all', label: 'ALL VIEWS' },
   ];
 
   useEffect(() => {
@@ -66,11 +65,7 @@ export default function PhotosPage() {
   // Weeks with photos
   const weeksWithPhotos = Array.from({ length: 16 }, (_, i) => i + 1).filter((w) => {
     const c = checkins.find((x) => x.week === w);
-    if (!c?.data?.photos) return false;
-    if (activeView === 'all') {
-      return Object.values(c.data.photos).some(Boolean);
-    }
-    return Boolean(c.data.photos[activeView]);
+    return Boolean(c?.data?.photos?.[activeView]);
   });
 
   return (
@@ -123,8 +118,7 @@ export default function PhotosPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {weeksWithPhotos.map((w) => {
             const c = checkins.find((x) => x.week === w);
-            const viewToDisplay = activeView === 'all' ? 'front' : activeView;
-            const imgUrl = photoUrls[`${w}_${viewToDisplay}`];
+            const imgUrl = photoUrls[`${w}_${activeView}`];
 
             const days = c?.data?.days || {};
             const weights = Object.values(days)
@@ -145,7 +139,7 @@ export default function PhotosPage() {
                   {imgUrl ? (
                     <img
                       src={imgUrl}
-                      alt={`Week ${w} - ${viewToDisplay}`}
+                      alt={`Week ${w} - ${activeView}`}
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   ) : (
