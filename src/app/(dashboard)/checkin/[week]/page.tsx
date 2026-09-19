@@ -574,13 +574,24 @@ export default function CheckinPage() {
                 <input
                   type="number"
                   min="0"
-                  value={data.energy ?? ''}
-                  onChange={(e) =>
+                  max="7"
+                  value={
+                    typeof data.nutrition === 'number'
+                      ? data.nutrition
+                      : typeof (data.nutrition as any)?.adherenceDays === 'number'
+                      ? (data.nutrition as any).adherenceDays
+                      : typeof data.energy === 'number'
+                      ? data.energy
+                      : ''
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? null : Number(e.target.value);
                     setData({
                       ...data,
-                      energy: e.target.value === '' ? null : Number(e.target.value),
-                    })
-                  }
+                      nutrition: val,
+                      energy: val,
+                    });
+                  }}
                   placeholder="7"
                 />
               </div>

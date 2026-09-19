@@ -85,11 +85,25 @@ export default function DashboardPage() {
     const c = checkins.find((x) => x.week === w);
     if (c?.data) {
       checkinLoggedCount++;
-      if (c.data.nutrition) {
-        // adherence days (0-7)
-        totalAdherenceNutrition += Math.min(7, Math.max(0, c.data.nutrition)) / 7;
+
+      // Safely parse nutrition adherence days (0-7)
+      let nutDays: number | null = null;
+      if (typeof c.data.nutrition === 'number' && !isNaN(c.data.nutrition)) {
+        nutDays = c.data.nutrition;
+      } else if (c.data.nutrition && typeof c.data.nutrition === 'object') {
+        const obj = c.data.nutrition as any;
+        if (typeof obj.adherenceDays === 'number' && !isNaN(obj.adherenceDays)) {
+          nutDays = obj.adherenceDays;
+        }
+      }
+      if (nutDays === null && typeof c.data.energy === 'number' && !isNaN(c.data.energy)) {
+        nutDays = c.data.energy;
+      }
+
+      if (nutDays !== null) {
+        totalAdherenceNutrition += Math.min(7, Math.max(0, nutDays)) / 7;
       } else {
-        totalAdherenceNutrition += 0.7; // default average if logged
+        totalAdherenceNutrition += 0.7; // default fallback if logged
       }
 
       if (c.data.training && typeof c.data.training === 'object') {
@@ -106,8 +120,10 @@ export default function DashboardPage() {
   }
 
   const checkinScore = totalWeeksPassed > 0 ? (checkinLoggedCount / totalWeeksPassed) * 100 : 0;
-  const nutritionScore = totalWeeksPassed > 0 ? (totalAdherenceNutrition / totalWeeksPassed) * 100 : 0;
-  const trainingScore = totalWeeksPassed > 0 ? (totalAdherenceTraining / totalWeeksPassed) * 100 : 0;
+  const rawNutScore = totalWeeksPassed > 0 ? (totalAdherenceNutrition / totalWeeksPassed) * 100 : 0;
+  const nutritionScore = isNaN(rawNutScore) ? 0 : rawNutScore;
+  const rawTrainScore = totalWeeksPassed > 0 ? (totalAdherenceTraining / totalWeeksPassed) * 100 : 0;
+  const trainingScore = isNaN(rawTrainScore) ? 0 : rawTrainScore;
 
   const overallScore = Math.round(
     trainingScore * 0.4 + nutritionScore * 0.4 + checkinScore * 0.2
