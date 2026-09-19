@@ -644,19 +644,27 @@ export default function CheckinPage() {
               })}
             </div>
 
+            {/* Column Header Labels */}
+            <div className="flex items-center gap-1.5 px-0.5 text-[10px] font-black uppercase tracking-wider text-[var(--muted)]">
+              <span className="w-4 shrink-0 text-center">#</span>
+              <span className="flex-1 min-w-0 pl-1">{t('liftName')}</span>
+              <span className="w-16 sm:w-20 shrink-0 text-center">กก. (kg)</span>
+              <span className="w-14 sm:w-16 shrink-0 text-center">ครั้ง (reps)</span>
+            </div>
+
             {/* Lift rows (up to 10) */}
-            <div className="space-y-2 pt-1">
+            <div className="space-y-1.5">
               {Array.from({ length: 10 }, (_, i) => {
                 const lift = currentDayLifts[i] || { name: '', weight: null, reps: null };
 
                 return (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="w-5 text-center text-[10px] font-black text-[var(--muted)]">
+                  <div key={i} className="flex items-center gap-1.5">
+                    <span className="w-4 shrink-0 text-center text-[10px] font-black text-[var(--muted)]">
                       {i + 1}
                     </span>
                     <input
                       type="text"
-                      className="flex-2 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-3 py-1.5 text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
+                      className="flex-1 min-w-0 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-2.5 py-1.5 text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
                       placeholder={t('liftName')}
                       value={lift.name || ''}
                       onChange={(e) => updateLift(i, 'name', e.target.value)}
@@ -664,7 +672,7 @@ export default function CheckinPage() {
                     <input
                       type="number"
                       step="0.5"
-                      className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-3 py-1.5 text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
+                      className="w-16 sm:w-20 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-1 py-1.5 text-center text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
                       placeholder="kg"
                       value={lift.weight ?? ''}
                       onChange={(e) =>
@@ -673,7 +681,7 @@ export default function CheckinPage() {
                     />
                     <input
                       type="number"
-                      className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-3 py-1.5 text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
+                      className="w-14 sm:w-16 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-1 py-1.5 text-center text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
                       placeholder="reps"
                       value={lift.reps ?? ''}
                       onChange={(e) =>

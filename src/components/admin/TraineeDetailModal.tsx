@@ -556,16 +556,16 @@ export function TraineeDetailModal({
                   {activeLifts
                     .filter((l) => l && (l.name || l.weight || l.reps))
                     .map((lift, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="h-5 w-5 rounded-full bg-[var(--cream)] text-center text-[10px] font-black leading-5 text-[var(--brown-dark)]">
+                      <div key={idx} className="flex items-center justify-between gap-2 p-2.5 text-xs">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="h-5 w-5 shrink-0 rounded-full bg-[var(--cream)] text-center text-[10px] font-black leading-5 text-[var(--brown-dark)]">
                             {idx + 1}
                           </span>
-                          <span className="font-extrabold text-[var(--brown-dark)]">{lift.name}</span>
+                          <span className="font-extrabold text-[var(--brown-dark)] truncate">{lift.name}</span>
                         </div>
-                        <div className="flex items-center gap-3 font-black text-[var(--muted)] text-[11px]">
-                          {lift.weight !== null && <span>น้ำหนัก: {lift.weight} kg</span>}
-                          {lift.reps !== null && <span>จำนวน: {lift.reps} ครั้ง</span>}
+                        <div className="flex items-center gap-2 shrink-0 font-black text-[var(--muted)] text-[11px]">
+                          {lift.weight !== null && <span>{lift.weight} kg</span>}
+                          {lift.reps !== null && <span>{lift.reps} ครั้ง</span>}
                         </div>
                       </div>
                     ))}

@@ -134,6 +134,16 @@
   border-color: var(--brown);
 }
 
+/* Hide number spinners for cleaner mobile layout */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 .consistency-ring {
   width: 120px;
   height: 120px;
