@@ -11,12 +11,13 @@ import {
   Camera,
   GitCompare,
   User,
+  ShieldCheck,
 } from 'lucide-react';
 
 export function BottomNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const { currentWeek } = useAuth();
+  const { currentWeek, isAdmin } = useAuth();
 
   const navItems = [
     { id: 'dashboard', label: t('bn_dashboard'), href: '/dashboard', icon: LayoutDashboard },
@@ -24,10 +25,11 @@ export function BottomNav() {
     { id: 'photos', label: t('bn_photos'), href: '/photos', icon: Camera },
     { id: 'compare', label: t('bn_compare'), href: '/compare', icon: GitCompare },
     { id: 'profile', label: t('bn_profile'), href: '/profile', icon: User },
+    ...(isAdmin ? [{ id: 'admin', label: t('bn_admin'), href: '/admin', icon: ShieldCheck }] : []),
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-[var(--border)] bg-[var(--paper-light)] py-2 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-[var(--border)] bg-[var(--paper-light)] py-1.5 px-1 md:hidden">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive =

@@ -4,7 +4,7 @@ export const I18N = {
   en: {
     nav_dashboard: 'Dashboard', nav_checkin: 'Weekly Check-in', nav_photos: 'Photos',
     nav_compare: 'Compare', nav_coachshare: 'Coach Share', nav_profile: 'Profile',
-    bn_dashboard: 'Dashboard', bn_checkin: 'Check-in', bn_photos: 'Photos', bn_compare: 'Compare', bn_profile: 'Profile',
+    bn_dashboard: 'Dashboard', bn_checkin: 'Check-in', bn_photos: 'Photos', bn_compare: 'Compare', bn_profile: 'Profile', bn_admin: 'Admin',
     week_pill: (n: number | string) => `WEEK ${String(n).padStart(2, '0')} / 16`,
     goal_cutting: 'CUTTING', goal_bulking: 'BULKING',
     connect_error: "Can't connect to the database. Check .env.local has the correct Supabase URL/key.",
@@ -93,7 +93,7 @@ export const I18N = {
   th: {
     nav_dashboard: 'แดชบอร์ด', nav_checkin: 'เช็คอินรายสัปดาห์', nav_photos: 'รูปภาพ',
     nav_compare: 'เปรียบเทียบ', nav_coachshare: 'แชร์ให้โค้ช', nav_profile: 'โปรไฟล์',
-    bn_dashboard: 'แดชบอร์ด', bn_checkin: 'เช็คอิน', bn_photos: 'รูปภาพ', bn_compare: 'เปรียบเทียบ', bn_profile: 'โปรไฟล์',
+    bn_dashboard: 'แดชบอร์ด', bn_checkin: 'เช็คอิน', bn_photos: 'รูปภาพ', bn_compare: 'เปรียบเทียบ', bn_profile: 'โปรไฟล์', bn_admin: 'แอดมิน',
     week_pill: (n: number | string) => `สัปดาห์ ${String(n).padStart(2, '0')} / 16`,
     goal_cutting: 'ลดไขมัน', goal_bulking: 'เพิ่มกล้าม',
     connect_error: 'เชื่อมต่อฐานข้อมูลไม่ได้ ตรวจสอบว่าใส่ Supabase URL/key ถูกต้องใน .env.local',

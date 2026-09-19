@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { createClient } from '@/lib/supabase/client';
@@ -13,10 +14,12 @@ import {
   Sparkles,
   Save,
   LogOut,
+  ShieldCheck,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { user, profile, refreshProfile, logout } = useAuth();
+  const { user, profile, refreshProfile, logout, isAdmin } = useAuth();
   const { t } = useLanguage();
   const supabase = createClient();
 
@@ -258,6 +261,32 @@ export default function ProfilePage() {
           </button>
         </form>
       </div>
+
+      {/* ADMIN PANEL SHORTCUT (ONLY FOR ADMINS) */}
+      {isAdmin && (
+        <div className="card bg-[var(--cream-soft)] border border-[var(--brown)]/30 flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brown-dark)] text-amber-300 shadow-sm">
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <div className="text-xs font-black tracking-wide text-[var(--brown-dark)]">
+                {t('admin_title')}
+              </div>
+              <div className="text-[11px] text-[var(--muted)]">
+                {t('admin_sub')}
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/admin"
+            className="btn primary small flex items-center gap-1 text-xs shrink-0"
+          >
+            <span>{t('admin_view_detail')}</span>
+            <ChevronRight size={14} />
+          </Link>
+        </div>
+      )}
 
       {/* COACH SHARE SECTION */}
       <div className="card space-y-4">

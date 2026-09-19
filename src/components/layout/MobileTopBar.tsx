@@ -2,10 +2,16 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { ShieldCheck } from 'lucide-react';
 
 export function MobileTopBar() {
   const { language, setLanguage } = useLanguage();
+  const { isAdmin } = useAuth();
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--border)] bg-[var(--paper-light)] px-4 py-3 md:hidden">
@@ -18,7 +24,21 @@ export function MobileTopBar() {
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold border transition-colors ${
+              pathname === '/admin'
+                ? 'bg-[var(--brown-dark)] text-white border-[var(--brown-dark)] shadow-sm'
+                : 'bg-[var(--cream)] text-[var(--brown-dark)] border-[var(--border)] hover:bg-[var(--cream-soft)]'
+            }`}
+          >
+            <ShieldCheck size={12} className={pathname === '/admin' ? 'text-amber-300' : 'text-[var(--brown)]'} />
+            <span>Admin</span>
+          </Link>
+        )}
+
         <a
           href="https://diamondmasszerotomassebook.netlify.app/"
           target="_blank"
