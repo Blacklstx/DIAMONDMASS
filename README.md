@@ -45,7 +45,7 @@ npm install
 ### 2. ตั้งค่าตัวแปรสภาพแวดล้อม (`.env.local`)
 ไฟล์ `.env.local` ถูกสร้างไว้พร้อมค่าเชื่อมต่อ Supabase แล้ว:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://cnoaopchjzipqqazrauj.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
