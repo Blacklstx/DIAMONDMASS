@@ -89,6 +89,14 @@ export const I18N = {
     admin_total_trainees: 'TOTAL TRAINEES', admin_active_this_week: 'CHECKED IN THIS WEEK', admin_pending_checkin: 'PENDING CHECK-IN',
     admin_trainee_list: 'TRAINEE ROSTER', admin_search_placeholder: 'Search by name...', admin_view_detail: 'View Program',
     admin_no_trainees: 'No trainees found', admin_access_denied: 'Admin Access Only', admin_cutting_count: 'CUTTING', admin_bulking_count: 'BULKING',
+    admin_delete_user: 'Delete User', admin_delete_user_confirm_title: 'Confirm Delete User',
+    admin_delete_user_confirm_body: (name: string) => `Are you sure you want to permanently delete ${name} and all their check-in data, photos, and account? This action cannot be undone.`,
+    admin_reset_data: 'Reset Check-in Data', admin_reset_data_confirm_title: 'Confirm Reset Data',
+    admin_reset_data_confirm_body: (name: string) => `Are you sure you want to clear all weekly check-ins, weight logs, training logs, and photos for ${name}? Their account will remain active.`,
+    admin_cancel: 'Cancel', admin_confirm_delete: 'Delete User', admin_confirm_reset: 'Reset All Data',
+    admin_user_deleted: 'User deleted successfully', admin_data_reset: 'Check-in data reset successfully',
+    admin_delete_failed: 'Failed to delete user. Please ensure admin privileges.',
+    admin_reset_failed: 'Failed to reset data. Please ensure admin privileges.',
   },
   th: {
     nav_dashboard: 'แดชบอร์ด', nav_checkin: 'เช็คอินรายสัปดาห์', nav_photos: 'รูปภาพ',
@@ -178,6 +186,14 @@ export const I18N = {
     admin_total_trainees: 'ลูกเทรนทั้งหมด', admin_active_this_week: 'เช็คอินแล้วสัปดาห์นี้', admin_pending_checkin: 'ยังไม่เช็คอินสัปดาห์นี้',
     admin_trainee_list: 'รายชื่อลูกเทรน', admin_search_placeholder: 'ค้นหาด้วยชื่อ...', admin_view_detail: 'ดูโปรแกรม',
     admin_no_trainees: 'ไม่พบข้อมูลลูกเทรน', admin_access_denied: 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น', admin_cutting_count: 'ลดไขมัน', admin_bulking_count: 'เพิ่มกล้าม',
+    admin_delete_user: 'ลบบัญชีผู้ใช้', admin_delete_user_confirm_title: 'ยืนยันการลบบัญชีผู้ใช้',
+    admin_delete_user_confirm_body: (name: string) => `คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ ${name} พร้อมข้อมูลเช็คอิน รูปภาพ และประวัติทั้งหมดอย่างถาวร? การกระทำนี้ไม่สามารถย้อนกลับได้`,
+    admin_reset_data: 'ลบข้อมูลเช็คอินทั้งหมด', admin_reset_data_confirm_title: 'ยืนยันการลบข้อมูลเช็คอิน',
+    admin_reset_data_confirm_body: (name: string) => `คุณต้องการลบข้อมูลเช็คอิน น้ำหนัก บันทึกการฝึก และรูปภาพทั้งหมดของ ${name} ใช่หรือไม่? บัญชีผู้ใช้จะยังคงอยู่แต่ข้อมูลสัปดาห์ทั้งหมดจะถูกรีเซ็ตเริ่มต้นใหม่`,
+    admin_cancel: 'ยกเลิก', admin_confirm_delete: 'ยืนยันลบบัญชี', admin_confirm_reset: 'ยืนยันลบข้อมูล',
+    admin_user_deleted: 'ลบบัญชีผู้ใช้เรียบร้อยแล้ว', admin_data_reset: 'รีเซ็ตข้อมูลเช็คอินเรียบร้อยแล้ว',
+    admin_delete_failed: 'ลบบัญชีไม่สำเร็จ โปรดตรวจสอบสิทธิ์ผู้ดูแลระบบ',
+    admin_reset_failed: 'ลบข้อมูลไม่สำเร็จ โปรดตรวจสอบสิทธิ์ผู้ดูแลระบบ',
   }
 };
 

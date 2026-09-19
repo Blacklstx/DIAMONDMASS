@@ -61,6 +61,9 @@ create policy "profiles_insert_own" on public.profiles
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = id or public.is_admin());
 
+create policy "profiles_delete_admin" on public.profiles
+  for delete using (public.is_admin());
+
 -- ------------------------------------------------------------
 -- 2. CHECKINS  (one row per user per week, all weekly fields in `data` jsonb)
 -- ------------------------------------------------------------
@@ -167,6 +170,60 @@ end;
 $$;
 
 grant execute on function public.get_coach_report(uuid) to anon, authenticated;
+
+-- ------------------------------------------------------------
+-- 5. ADMIN MANAGEMENT FUNCTIONS (Security Definer)
+-- ------------------------------------------------------------
+
+-- Reset all checkins and progress photos for a trainee
+create or replace function public.admin_reset_user_data(p_user_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, storage
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Unauthorized: Only admins can reset user data';
+  end if;
+
+  delete from public.checkins where user_id = p_user_id;
+  delete from public.checkin_photos where user_id = p_user_id;
+
+  delete from storage.objects
+  where bucket_id = 'progress-photos'
+    and (storage.foldername(name))[1] = p_user_id::text;
+
+  return true;
+end;
+$$;
+
+-- Permanently delete trainee user account and all data
+create or replace function public.admin_delete_user(p_user_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth, storage
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Unauthorized: Only admins can delete users';
+  end if;
+
+  -- Delete from auth.users (cascades to profiles, checkins, checkin_photos)
+  delete from auth.users where id = p_user_id;
+
+  -- Delete progress photos from storage
+  delete from storage.objects
+  where bucket_id = 'progress-photos'
+    and (storage.foldername(name))[1] = p_user_id::text;
+
+  return true;
+end;
+$$;
+
+grant execute on function public.admin_reset_user_data(uuid) to authenticated;
+grant execute on function public.admin_delete_user(uuid) to authenticated;
 
 -- ============================================================
 -- Done. Next steps:

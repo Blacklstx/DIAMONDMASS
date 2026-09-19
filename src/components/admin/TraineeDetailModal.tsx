@@ -20,18 +20,26 @@ import {
   Moon,
   MessageSquare,
   Maximize2,
+  Trash2,
+  RotateCcw,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 
 interface TraineeDetailModalProps {
   trainee: Profile | null;
   allCheckins: Checkin[];
   onClose: () => void;
+  onUserDeleted?: (userId: string) => void;
+  onUserDataReset?: (userId: string) => void;
 }
 
 export function TraineeDetailModal({
   trainee,
   allCheckins,
   onClose,
+  onUserDeleted,
+  onUserDataReset,
 }: TraineeDetailModalProps) {
   const { t } = useLanguage();
   const supabase = createClient();
@@ -42,6 +50,70 @@ export function TraineeDetailModal({
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [zoomImage, setZoomImage] = useState<{ url: string; title: string } | null>(null);
+
+  // Admin delete/reset states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleDeleteUser = async () => {
+    if (!trainee) return;
+    setProcessingAction('delete');
+    setActionError(null);
+
+    try {
+      // 1. Try RPC admin_delete_user
+      const { error: rpcErr } = await supabase.rpc('admin_delete_user', {
+        p_user_id: trainee.id,
+      });
+
+      if (rpcErr) {
+        console.warn('admin_delete_user RPC error, using fallback:', rpcErr);
+        await supabase.from('checkins').delete().eq('user_id', trainee.id);
+        await supabase.from('checkin_photos').delete().eq('user_id', trainee.id);
+        const { error: profErr } = await supabase.from('profiles').delete().eq('id', trainee.id);
+        if (profErr) throw profErr;
+      }
+
+      onUserDeleted?.(trainee.id);
+      onClose();
+    } catch (err: any) {
+      console.error('Delete user error:', err);
+      setActionError(err.message || t('admin_delete_failed'));
+      setProcessingAction(null);
+    }
+  };
+
+  const handleResetUserData = async () => {
+    if (!trainee) return;
+    setProcessingAction('reset');
+    setActionError(null);
+
+    try {
+      // 1. Try RPC admin_reset_user_data
+      const { error: rpcErr } = await supabase.rpc('admin_reset_user_data', {
+        p_user_id: trainee.id,
+      });
+
+      if (rpcErr) {
+        console.warn('admin_reset_user_data RPC error, using fallback:', rpcErr);
+        const { error: cErr } = await supabase.from('checkins').delete().eq('user_id', trainee.id);
+        if (cErr) throw cErr;
+        await supabase.from('checkin_photos').delete().eq('user_id', trainee.id);
+      }
+
+      onUserDataReset?.(trainee.id);
+      setShowResetConfirm(false);
+      setSelectedWeek(1);
+      setPhotoUrls({});
+      setProcessingAction(null);
+    } catch (err: any) {
+      console.error('Reset data error:', err);
+      setActionError(err.message || t('admin_reset_failed'));
+      setProcessingAction(null);
+    }
+  };
 
   // Filter checkins for this trainee
   const traineeCheckins = trainee
@@ -243,13 +315,26 @@ export function TraineeDetailModal({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl p-1.5 text-[var(--muted)] hover:bg-[var(--cream)] hover:text-[var(--brown-dark)]"
-          >
-            <X size={22} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setActionError(null);
+                setShowDeleteConfirm(true);
+              }}
+              title={t('admin_delete_user')}
+              className="rounded-xl p-2 text-red-600 hover:bg-red-100/70 hover:text-red-700 transition-colors cursor-pointer"
+            >
+              <Trash2 size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl p-1.5 text-[var(--muted)] hover:bg-[var(--cream)] hover:text-[var(--brown-dark)] cursor-pointer"
+            >
+              <X size={22} />
+            </button>
+          </div>
         </div>
 
         {/* TARGETS SUMMARY BAR */}
@@ -651,6 +736,50 @@ export function TraineeDetailModal({
                 </Link>
               </div>
             )}
+
+            {/* DANGER ZONE: ADMIN CONTROLS */}
+            <div className="rounded-2xl border border-red-200/80 bg-red-50/40 p-4 space-y-3">
+              <div className="flex items-center gap-2 border-b border-red-200/60 pb-2">
+                <AlertTriangle size={16} className="text-red-600" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-red-900">
+                  จัดการข้อมูลและบัญชีลูกเทรน (Admin Controls)
+                </h3>
+              </div>
+              <p className="text-[11px] text-red-700/90 leading-relaxed">
+                การลบข้อมูลจะไม่สามารถกู้คืนได้ โปรดใช้ความระมัดระวังในการดำเนินการ
+              </p>
+              {actionError && (
+                <div className="rounded-xl border border-red-200 bg-red-100 p-2.5 text-xs font-bold text-red-800">
+                  {actionError}
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActionError(null);
+                    setShowResetConfirm(true);
+                  }}
+                  disabled={Boolean(processingAction)}
+                  className="rounded-xl border border-amber-300 bg-white px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-50 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  <RotateCcw size={14} className="text-amber-600" />
+                  <span>{t('admin_reset_data')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActionError(null);
+                    setShowDeleteConfirm(true);
+                  }}
+                  disabled={Boolean(processingAction)}
+                  className="rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-red-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                  <span>{t('admin_delete_user')}</span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -755,6 +884,113 @@ export function TraineeDetailModal({
                   alt={zoomImage.title}
                   className="h-full w-full object-contain"
                 />
+              </div>
+            </div>
+          </div>
+        )}
+        {/* RESET DATA CONFIRMATION MODAL */}
+        {showResetConfirm && (
+          <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--paper-light)] p-5 space-y-4 shadow-2xl animate-fade-in">
+              <div className="flex items-center gap-3 text-amber-700">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                  <RotateCcw size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[var(--brown-dark)]">
+                    {t('admin_reset_data_confirm_title')}
+                  </h3>
+                  <div className="text-[11px] font-semibold text-[var(--muted)]">
+                    {trainee.name} ({trainee.goal})
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-[var(--muted)] leading-relaxed bg-[var(--paper)] p-3 rounded-xl border border-[var(--border)]">
+                {t('admin_reset_data_confirm_body', trainee.name || 'ลูกเทรน')}
+              </p>
+              {actionError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700">
+                  {actionError}
+                </div>
+              )}
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(false)}
+                  disabled={Boolean(processingAction)}
+                  className="btn secondary small text-xs cursor-pointer"
+                >
+                  {t('admin_cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetUserData}
+                  disabled={Boolean(processingAction)}
+                  className="btn small bg-amber-600 text-white hover:bg-amber-700 flex items-center gap-1.5 text-xs cursor-pointer shadow-xs"
+                >
+                  {processingAction === 'reset' ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>กำลังลบข้อมูล...</span>
+                    </>
+                  ) : (
+                    <span>{t('admin_confirm_reset')}</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* DELETE USER CONFIRMATION MODAL */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--paper-light)] p-5 space-y-4 shadow-2xl animate-fade-in">
+              <div className="flex items-center gap-3 text-red-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[var(--brown-dark)]">
+                    {t('admin_delete_user_confirm_title')}
+                  </h3>
+                  <div className="text-[11px] font-semibold text-[var(--muted)]">
+                    {trainee.name} ({trainee.goal})
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-red-800 leading-relaxed bg-red-50 p-3 rounded-xl border border-red-200">
+                {t('admin_delete_user_confirm_body', trainee.name || 'ลูกเทรน')}
+              </p>
+              {actionError && (
+                <div className="rounded-xl border border-red-200 bg-red-100 p-2.5 text-xs font-semibold text-red-700">
+                  {actionError}
+                </div>
+              )}
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={Boolean(processingAction)}
+                  className="btn secondary small text-xs cursor-pointer"
+                >
+                  {t('admin_cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteUser}
+                  disabled={Boolean(processingAction)}
+                  className="btn small bg-red-600 text-white hover:bg-red-700 flex items-center gap-1.5 text-xs cursor-pointer shadow-xs"
+                >
+                  {processingAction === 'delete' ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>กำลังลบบัญชี...</span>
+                    </>
+                  ) : (
+                    <span>{t('admin_confirm_delete')}</span>
+                  )}
+                </button>
               </div>
             </div>
           </div>

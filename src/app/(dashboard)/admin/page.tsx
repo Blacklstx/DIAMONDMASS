@@ -17,6 +17,10 @@ import {
   CheckCircle2,
   Clock,
   ChevronRight,
+  Trash2,
+  AlertTriangle,
+  Loader2,
+  X,
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -30,6 +34,43 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [goalFilter, setGoalFilter] = useState<'all' | 'cutting' | 'bulking'>('all');
   const [selectedTrainee, setSelectedTrainee] = useState<Profile | null>(null);
+
+  // Trainee deletion from roster state
+  const [traineeToDelete, setTraineeToDelete] = useState<Profile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const confirmDeleteUser = async () => {
+    if (!traineeToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const { error: rpcErr } = await supabase.rpc('admin_delete_user', {
+        p_user_id: traineeToDelete.id,
+      });
+
+      if (rpcErr) {
+        console.warn('admin_delete_user RPC error, fallback:', rpcErr);
+        await supabase.from('checkins').delete().eq('user_id', traineeToDelete.id);
+        await supabase.from('checkin_photos').delete().eq('user_id', traineeToDelete.id);
+        const { error: profErr } = await supabase.from('profiles').delete().eq('id', traineeToDelete.id);
+        if (profErr) throw profErr;
+      }
+
+      setTrainees((prev) => prev.filter((t) => t.id !== traineeToDelete.id));
+      setAllCheckins((prev) => prev.filter((c) => c.user_id !== traineeToDelete.id));
+      if (selectedTrainee?.id === traineeToDelete.id) {
+        setSelectedTrainee(null);
+      }
+      setTraineeToDelete(null);
+    } catch (err: any) {
+      console.error('Delete user error:', err);
+      setDeleteError(err.message || t('admin_delete_failed'));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Fetch all trainees and their checkins
   useEffect(() => {
@@ -423,14 +464,27 @@ export default function AdminPage() {
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTrainee(trainee)}
-                    className="btn primary small flex items-center gap-1 text-xs"
-                  >
-                    <span>{t('admin_view_detail')}</span>
-                    <ChevronRight size={14} />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTrainee(trainee)}
+                      className="btn primary small flex items-center gap-1 text-xs"
+                    >
+                      <span>{t('admin_view_detail')}</span>
+                      <ChevronRight size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteError(null);
+                        setTraineeToDelete(trainee);
+                      }}
+                      title={t('admin_delete_user')}
+                      className="rounded-xl border border-red-200 bg-red-50/70 p-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -438,13 +492,78 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Trainee Detail Modal with Photos, Metrics & Training Logs */}
+      {/* Trainee Detail Modal with Photos, Metrics, Training Logs & Admin Controls */}
       {selectedTrainee && (
         <TraineeDetailModal
           trainee={selectedTrainee}
           allCheckins={allCheckins}
           onClose={() => setSelectedTrainee(null)}
+          onUserDeleted={(userId) => {
+            setTrainees((prev) => prev.filter((t) => t.id !== userId));
+            setAllCheckins((prev) => prev.filter((c) => c.user_id !== userId));
+            setSelectedTrainee(null);
+          }}
+          onUserDataReset={(userId) => {
+            setAllCheckins((prev) => prev.filter((c) => c.user_id !== userId));
+          }}
         />
+      )}
+
+      {/* ROSTER QUICK DELETE CONFIRMATION MODAL */}
+      {traineeToDelete && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--paper-light)] p-5 space-y-4 shadow-2xl animate-fade-in">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-[var(--brown-dark)]">
+                  {t('admin_delete_user_confirm_title')}
+                </h3>
+                <div className="text-[11px] font-semibold text-[var(--muted)]">
+                  {traineeToDelete.name || 'ลูกเทรน'} ({traineeToDelete.goal})
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-red-800 leading-relaxed bg-red-50 p-3 rounded-xl border border-red-200">
+              {t('admin_delete_user_confirm_body', traineeToDelete.name || 'ลูกเทรน')}
+            </p>
+            {deleteError && (
+              <div className="rounded-xl border border-red-200 bg-red-100 p-2.5 text-xs font-semibold text-red-700">
+                {deleteError}
+              </div>
+            )}
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setTraineeToDelete(null);
+                  setDeleteError(null);
+                }}
+                disabled={isDeleting}
+                className="btn secondary small text-xs cursor-pointer"
+              >
+                {t('admin_cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteUser}
+                disabled={isDeleting}
+                className="btn small bg-red-600 text-white hover:bg-red-700 flex items-center gap-1.5 text-xs cursor-pointer shadow-xs"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>กำลังลบบัญชี...</span>
+                  </>
+                ) : (
+                  <span>{t('admin_confirm_delete')}</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
