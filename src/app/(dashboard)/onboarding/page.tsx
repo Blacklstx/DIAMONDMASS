@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { createClient } from '@/lib/supabase/client';
-import { GoalType } from '@/types/database';
+import { GoalType, GENDER_OPTIONS } from '@/types/database';
 
 export default function OnboardingPage() {
   const { user, profile, isAdmin, refreshProfile, loading: authLoading } = useAuth();
@@ -163,9 +163,11 @@ export default function OnboardingPage() {
             <div className="field">
               <label>{t('ob_gender')}</label>
               <select value={gender} onChange={(e) => setGender(e.target.value)}>
-                <option value="male">{t('gender_male')}</option>
-                <option value="female">{t('gender_female')}</option>
-                <option value="other">{t('gender_other')}</option>
+                {GENDER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.labelTh}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="field">

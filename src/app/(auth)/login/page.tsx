@@ -5,12 +5,14 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/context/LanguageContext';
+import { GENDER_OPTIONS } from '@/types/database';
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [gender, setGender] = useState<string>('male');
+  const [customGender, setCustomGender] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -90,13 +92,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const finalGender = gender === 'other' && customGender.trim() ? customGender.trim() : gender;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name: name.trim(),
-            gender,
+            gender: finalGender,
           },
         },
       });
@@ -113,7 +117,7 @@ export default function LoginPage() {
           id: data.user.id,
           email: email.trim().toLowerCase(),
           name: name.trim(),
-          gender,
+          gender: finalGender,
           role: 'user',
         });
       }
@@ -289,32 +293,34 @@ export default function LoginPage() {
 
             <div className="field">
               <label>{t('auth_gender')}</label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setGender('male')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-bold transition-all cursor-pointer ${
-                    gender === 'male'
-                      ? 'border-[var(--brown-dark)] bg-[var(--brown-dark)] text-white shadow-sm'
-                      : 'border-[var(--border)] bg-white text-[var(--muted)] hover:bg-[var(--cream-soft)]'
-                  }`}
-                >
-                  <span className="text-sm">👨</span>
-                  <span>{t('gender_male')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGender('female')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-bold transition-all cursor-pointer ${
-                    gender === 'female'
-                      ? 'border-[var(--brown-dark)] bg-[var(--brown-dark)] text-white shadow-sm'
-                      : 'border-[var(--border)] bg-white text-[var(--muted)] hover:bg-[var(--cream-soft)]'
-                  }`}
-                >
-                  <span className="text-sm">👩</span>
-                  <span>{t('gender_female')}</span>
-                </button>
-              </div>
+              <select
+                value={gender}
+                onChange={(e) => {
+                  setGender(e.target.value);
+                  if (e.target.value !== 'other') {
+                    setCustomGender('');
+                  }
+                }}
+                className="w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2.5 text-xs text-[var(--text)] outline-none focus:border-[var(--brown)] cursor-pointer"
+              >
+                {GENDER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {language === 'th' ? opt.labelTh : opt.labelEn}
+                  </option>
+                ))}
+              </select>
+
+              {gender === 'other' && (
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    value={customGender}
+                    onChange={(e) => setCustomGender(e.target.value)}
+                    placeholder={language === 'th' ? 'โปรดระบุเพศของคุณ...' : 'Please specify your gender...'}
+                    className="w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="field">

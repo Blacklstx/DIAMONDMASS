@@ -13,14 +13,16 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
   name text,
-  gender text default 'male' check (gender in ('male','female')),
+  gender text default 'male',
   role text default 'user' check (role in ('user','admin')),
   created_at timestamptz default now()
 );
 
--- Migration safety for profiles columns
+-- Migration safety for profiles columns (drop restrictive gender check)
 alter table public.profiles add column if not exists email text;
-alter table public.profiles add column if not exists gender text default 'male' check (gender in ('male','female'));
+alter table public.profiles add column if not exists gender text default 'male';
+alter table public.profiles drop constraint if exists profiles_gender_check;
+alter table public.profiles alter column gender set default 'male';
 alter table public.profiles add column if not exists role text default 'user' check (role in ('user','admin'));
 
 -- Fill missing emails from auth.users
