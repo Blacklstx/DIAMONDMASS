@@ -5,13 +5,33 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { TrendChart } from '@/components/dashboard/TrendChart';
-import { ArrowRight, CheckCircle2, ChevronRight } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronRight, ShieldCheck } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { profile, checkins, currentWeek, getWeekStatus } = useAuth();
+  const { profile, checkins, currentWeek, getWeekStatus, isAdmin } = useAuth();
   const { t } = useLanguage();
 
   if (!profile || !profile.start_weight) {
+    if (isAdmin) {
+      return (
+        <div className="card text-center py-12 max-w-md mx-auto">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-900 border border-amber-300">
+            <ShieldCheck size={26} />
+          </div>
+          <h2 className="text-base font-extrabold text-[var(--brown-dark)] mb-2">
+            แดชบอร์ดผู้ดูแลระบบ (Admin / Coach)
+          </h2>
+          <p className="text-xs text-[var(--muted)] mb-5">
+            คุณเข้าสู่ระบบในฐานะแอดมิน ไม่จำเป็นต้องกรอกข้อมูลลูกเทรน
+          </p>
+          <Link href="/admin" className="btn primary small inline-flex items-center gap-2">
+            <ShieldCheck size={16} />
+            <span>ไปที่แดชบอร์ดแอดมิน</span>
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <div className="card text-center py-12">
         <h2 className="text-base font-extrabold text-[var(--brown-dark)] mb-2">
@@ -64,16 +84,18 @@ export default function DashboardPage() {
   const startWeight = profile.start_weight;
   const validWeights = weightSeries.filter((v): v is number => v !== null);
   const currentWeight = validWeights.length > 0 ? validWeights[validWeights.length - 1] : startWeight;
-  const weightChange = currentWeight !== null && startWeight !== null
-    ? Math.round((currentWeight - startWeight) * 10) / 10
-    : 0;
+  const weightChange =
+    currentWeight !== null && currentWeight !== undefined && startWeight !== null && startWeight !== undefined
+      ? Math.round((currentWeight - startWeight) * 10) / 10
+      : 0;
 
   const startWaist = profile.start_waist;
   const validWaists = waistSeries.filter((v): v is number => v !== null);
   const currentWaist = validWaists.length > 0 ? validWaists[validWaists.length - 1] : startWaist;
-  const waistChange = currentWaist !== null && startWaist !== null
-    ? Math.round((currentWaist - startWaist) * 10) / 10
-    : 0;
+  const waistChange =
+    currentWaist !== null && currentWaist !== undefined && startWaist !== null && startWaist !== undefined
+      ? Math.round((currentWaist - startWaist) * 10) / 10
+      : 0;
 
   // Consistency score calculation
   const totalWeeksPassed = Math.min(currentWeek, 16);

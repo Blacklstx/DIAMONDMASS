@@ -26,6 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
@@ -33,13 +34,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadData = async (currentUser: User) => {
     try {
-      const { data: pData } = await supabase
+      // 1. Fetch user profile (stores only email, name, gender, role)
+      let { data: pData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
         .maybeSingle();
 
-      setProfile(pData);
+      // Ensure profile exists for newly authenticated users
+      if (!pData) {
+        const fallbackName = currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User';
+        const fallbackGender = currentUser.user_metadata?.gender || 'male';
+        const { data: newPData } = await supabase
+          .from('profiles')
+          .insert({
+            id: currentUser.id,
+            email: currentUser.email,
+            name: fallbackName,
+            gender: fallbackGender,
+            role: 'user',
+          })
+          .select()
+          .maybeSingle();
+        pData = newPData;
+      }
+
+      const userIsAdmin = pData?.role === 'admin';
+      setIsAdmin(userIsAdmin);
+
+      // 2. Fetch trainee profile (all the separated fitness data)
+      let traineeData: any = null;
+      if (!userIsAdmin) {
+        const { data: tData } = await supabase
+          .from('trainee_profiles')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+        traineeData = tData;
+      }
+
+      // Merge user account + trainee fitness data for backwards compatibility
+      setProfile({
+        ...(pData || { id: currentUser.id, role: 'user' }),
+        ...(traineeData || {}),
+        id: currentUser.id,
+      });
 
       const { data: cData } = await supabase
         .from('checkins')
@@ -75,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
         setProfile(null);
+        setIsAdmin(false);
         setCheckins([]);
       }
       setLoading(false);
@@ -88,12 +128,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data: pData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
-    setProfile(data);
+
+    const userIsAdmin = pData?.role === 'admin';
+    setIsAdmin(userIsAdmin);
+
+    let traineeData: any = null;
+    if (!userIsAdmin) {
+      const { data: tData } = await supabase
+        .from('trainee_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      traineeData = tData;
+    }
+
+    setProfile({
+      ...(pData || { id: user.id, role: 'user' }),
+      ...(traineeData || {}),
+      id: user.id,
+    });
   };
 
   const refreshCheckins = async () => {
@@ -110,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    setIsAdmin(false);
     setCheckins([]);
     router.push('/login');
   };
@@ -178,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkins,
         loading,
         currentWeek,
-        isAdmin: profile?.role === 'admin',
+        isAdmin: isAdmin || profile?.role === 'admin',
         refreshProfile,
         refreshCheckins,
         logout,

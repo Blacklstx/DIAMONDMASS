@@ -2,28 +2,55 @@ export type GoalType = 'cutting' | 'bulking';
 export type LanguageType = 'th' | 'en';
 export type UserRole = 'user' | 'admin';
 
-export interface Profile {
+export interface UserProfile {
   id: string;
-  name: string | null;
-  age: number | null;
-  gender: string | null;
-  height: number | null;
-  goal: GoalType;
+  email?: string | null;
+  name?: string | null;
+  gender?: string | null;
   role?: UserRole;
-  start_date: string | null;
-  start_weight: number | null;
-  target_weight: number | null;
-  start_waist: number | null;
-  training_days: number | null;
-  steps_target: number | null;
-  calorie_target: number | null;
-  protein_target: number | null;
-  cardio_target: number | null;
-  allow_future_checkins: boolean;
-  language: LanguageType;
-  coach_token: string;
-  coach_share_active: boolean;
   created_at?: string;
+}
+
+export interface TraineeProfile {
+  user_id: string;
+  goal?: GoalType;
+  start_date?: string | null;
+  start_weight?: number | null;
+  target_weight?: number | null;
+  start_waist?: number | null;
+  age?: number | null;
+  height?: number | null;
+  training_days?: number | null;
+  steps_target?: number | null;
+  calorie_target?: number | null;
+  protein_target?: number | null;
+  cardio_target?: number | null;
+  allow_future_checkins?: boolean;
+  language?: LanguageType;
+  coach_token?: string;
+  coach_share_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Joined representation for backwards compatibility
+export interface Profile extends UserProfile {
+  goal?: GoalType;
+  age?: number | null;
+  height?: number | null;
+  start_date?: string | null;
+  start_weight?: number | null;
+  target_weight?: number | null;
+  start_waist?: number | null;
+  training_days?: number | null;
+  steps_target?: number | null;
+  calorie_target?: number | null;
+  protein_target?: number | null;
+  cardio_target?: number | null;
+  allow_future_checkins?: boolean;
+  language?: LanguageType;
+  coach_token?: string;
+  coach_share_active?: boolean;
 }
 
 export interface TrainingLift {

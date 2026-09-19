@@ -63,22 +63,36 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      const { error } = await supabase
+      // 1. Update basic account identity in profiles
+      const { error: pErr } = await supabase
         .from('profiles')
         .update({
           name: name || null,
-          start_date: startDate || null,
-          target_weight: targetWeight === '' ? null : Number(targetWeight),
-          training_days: trainingDays === '' ? 16 : Number(trainingDays),
-          calorie_target: calorieTarget === '' ? null : Number(calorieTarget),
-          protein_target: proteinTarget === '' ? null : Number(proteinTarget),
-          steps_target: stepsTarget === '' ? 8000 : Number(stepsTarget),
-          cardio_target: cardioTarget === '' ? null : Number(cardioTarget),
-          allow_future_checkins: true,
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (pErr) throw pErr;
+
+      // 2. If trainee, update fitness metrics in trainee_profiles
+      if (!isAdmin) {
+        const { error: tErr } = await supabase
+          .from('trainee_profiles')
+          .upsert({
+            user_id: user.id,
+            start_date: startDate || null,
+            target_weight: targetWeight === '' ? null : Number(targetWeight),
+            training_days: trainingDays === '' ? 16 : Number(trainingDays),
+            calorie_target: calorieTarget === '' ? null : Number(calorieTarget),
+            protein_target: proteinTarget === '' ? null : Number(proteinTarget),
+            steps_target: stepsTarget === '' ? 8000 : Number(stepsTarget),
+            cardio_target: cardioTarget === '' ? null : Number(cardioTarget),
+            allow_future_checkins: true,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+
+        if (tErr) throw tErr;
+      }
+
       await refreshProfile();
       showToast(t('toast_profile_saved'));
     } catch (err: any) {
@@ -95,9 +109,10 @@ export default function ProfilePage() {
     setCoachActive(nextState);
 
     await supabase
-      .from('profiles')
+      .from('trainee_profiles')
       .update({ coach_share_active: nextState })
-      .eq('id', user.id);
+      .eq('user_id', user.id);
+
     await refreshProfile();
     showToast(t('toast_saved'));
   };
@@ -107,9 +122,10 @@ export default function ProfilePage() {
     const newToken = crypto.randomUUID();
 
     await supabase
-      .from('profiles')
+      .from('trainee_profiles')
       .update({ coach_token: newToken, coach_share_active: true })
-      .eq('id', user.id);
+      .eq('user_id', user.id);
+
     setCoachActive(true);
     await refreshProfile();
     showToast('New coach link generated');

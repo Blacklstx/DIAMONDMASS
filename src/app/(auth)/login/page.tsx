@@ -9,6 +9,8 @@ import { useLanguage } from '@/context/LanguageContext';
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup' | 'forgot'>('login');
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [gender, setGender] = useState<'male' | 'female'>('male');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -35,6 +37,32 @@ export default function LoginPage() {
         setErrorMsg(error.message || t('auth_error_generic'));
         setLoading(false);
         return;
+      }
+
+      if (authData?.user) {
+        // 1. Check if user is admin (only email, name, gender, role in profiles)
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', authData.user.id)
+          .maybeSingle();
+
+        if (prof?.role === 'admin') {
+          router.push('/admin');
+          return;
+        }
+
+        // 2. Check if trainee has completed onboarding in trainee_profiles
+        const { data: trainee } = await supabase
+          .from('trainee_profiles')
+          .select('start_weight')
+          .eq('user_id', authData.user.id)
+          .maybeSingle();
+
+        if (!trainee || !trainee.start_weight) {
+          router.push('/onboarding');
+          return;
+        }
       }
 
       router.push('/dashboard');
@@ -49,6 +77,11 @@ export default function LoginPage() {
     setErrorMsg('');
     setSuccessMsg('');
 
+    if (!name.trim()) {
+      setErrorMsg(language === 'th' ? 'กรุณากรอกชื่อของคุณ' : 'Please enter your name');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMsg(t('auth_error_mismatch'));
       return;
@@ -57,15 +90,32 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name: name.trim(),
+            gender,
+          },
+        },
       });
 
       if (error) {
         setErrorMsg(error.message || t('auth_error_generic'));
         setLoading(false);
         return;
+      }
+
+      // Safe fallback upsert to profiles table (email, name, gender, role)
+      if (data?.user) {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email: email.trim().toLowerCase(),
+          name: name.trim(),
+          gender,
+          role: 'user',
+        });
       }
 
       setSuccessMsg(t('auth_signup_success'));
@@ -226,6 +276,47 @@ export default function LoginPage() {
 
         {tab === 'signup' && (
           <form onSubmit={handleSignup} className="space-y-4">
+            <div className="field">
+              <label>{t('auth_name')}</label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={language === 'th' ? 'ชื่อ หรือ ชื่อเล่น' : 'Full Name or Nickname'}
+              />
+            </div>
+
+            <div className="field">
+              <label>{t('auth_gender')}</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGender('male')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-bold transition-all cursor-pointer ${
+                    gender === 'male'
+                      ? 'border-[var(--brown-dark)] bg-[var(--brown-dark)] text-white shadow-sm'
+                      : 'border-[var(--border)] bg-white text-[var(--muted)] hover:bg-[var(--cream-soft)]'
+                  }`}
+                >
+                  <span className="text-sm">👨</span>
+                  <span>{t('gender_male')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGender('female')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-bold transition-all cursor-pointer ${
+                    gender === 'female'
+                      ? 'border-[var(--brown-dark)] bg-[var(--brown-dark)] text-white shadow-sm'
+                      : 'border-[var(--border)] bg-white text-[var(--muted)] hover:bg-[var(--cream-soft)]'
+                  }`}
+                >
+                  <span className="text-sm">👩</span>
+                  <span>{t('gender_female')}</span>
+                </button>
+              </div>
+            </div>
+
             <div className="field">
               <label>{t('auth_email')}</label>
               <input

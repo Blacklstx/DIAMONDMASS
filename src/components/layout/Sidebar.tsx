@@ -113,12 +113,21 @@ export function Sidebar() {
 
         {/* Footer info */}
         <div className="border-t border-[var(--border)] pt-4 text-xs text-[var(--muted)]">
-        <div className="mb-2 inline-block rounded-full bg-[var(--cream)] px-2.5 py-1 text-[11px] font-bold text-[var(--brown-dark)]">
-          {t('week_pill', currentWeek)}
-        </div>
-        <div className="text-[11px] font-semibold text-[var(--muted)]">
-          {profile?.goal ? `${goalText}` : '—'}
-        </div>
+        {isAdmin && !profile?.start_date ? (
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-900 border border-amber-300">
+            <ShieldCheck size={13} />
+            <span>ADMIN / COACH</span>
+          </div>
+        ) : (
+          <>
+            <div className="mb-2 inline-block rounded-full bg-[var(--cream)] px-2.5 py-1 text-[11px] font-bold text-[var(--brown-dark)]">
+              {t('week_pill', currentWeek)}
+            </div>
+            <div className="text-[11px] font-semibold text-[var(--muted)]">
+              {profile?.goal ? `${goalText}` : '—'}
+            </div>
+          </>
+        )}
         <button
           onClick={logout}
           className="mt-3 flex items-center gap-1.5 text-xs font-bold text-[var(--brown)] hover:opacity-80 cursor-pointer"

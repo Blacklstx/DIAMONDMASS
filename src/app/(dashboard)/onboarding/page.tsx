@@ -9,10 +9,16 @@ import { createClient } from '@/lib/supabase/client';
 import { GoalType } from '@/types/database';
 
 export default function OnboardingPage() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, refreshProfile, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    if (!authLoading && isAdmin) {
+      router.replace('/admin');
+    }
+  }, [authLoading, isAdmin, router]);
 
   const [name, setName] = useState('');
   const [age, setAge] = useState<number | ''>('');
@@ -55,26 +61,38 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      const payload = {
-        id: user.id,
-        name: name || null,
-        age: age === '' ? null : Number(age),
-        gender,
-        height: height === '' ? null : Number(height),
+      // 1. Update basic identity in profiles table (stores only email, name, gender, role)
+      await supabase
+        .from('profiles')
+        .update({
+          name: name || null,
+          gender,
+        })
+        .eq('id', user.id);
+
+      // 2. Save all fitness metrics into dedicated trainee_profiles table
+      const traineePayload = {
+        user_id: user.id,
         goal,
+        start_date: startDate,
         start_weight: startWeight === '' ? null : Number(startWeight),
         target_weight: targetWeight === '' ? null : Number(targetWeight),
         start_waist: startWaist === '' ? null : Number(startWaist),
-        start_date: startDate,
+        age: age === '' ? null : Number(age),
+        height: height === '' ? null : Number(height),
         training_days: trainingDays === '' ? 16 : Number(trainingDays),
         steps_target: stepsTarget === '' ? 8000 : Number(stepsTarget),
         calorie_target: calorieTarget === '' ? null : Number(calorieTarget),
         protein_target: proteinTarget === '' ? null : Number(proteinTarget),
         allow_future_checkins: true,
+        updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase.from('profiles').upsert(payload);
-      if (error) throw error;
+      const { error: tErr } = await supabase
+        .from('trainee_profiles')
+        .upsert(traineePayload, { onConflict: 'user_id' });
+
+      if (tErr) throw tErr;
 
       // Ensure week 1 exists with initial data
       if (startWeight || startWaist) {

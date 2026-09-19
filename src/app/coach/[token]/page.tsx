@@ -95,9 +95,10 @@ export default function CoachReportPage() {
 
   const validWeights = weightSeries.filter((v): v is number => v !== null);
   const currentWeight = validWeights.length > 0 ? validWeights[validWeights.length - 1] : profile.start_weight;
-  const weightChange = currentWeight !== null && profile.start_weight !== null
-    ? Math.round((currentWeight - profile.start_weight) * 10) / 10
-    : 0;
+  const weightChange =
+    currentWeight !== null && currentWeight !== undefined && profile.start_weight !== null && profile.start_weight !== undefined
+      ? Math.round((currentWeight - profile.start_weight) * 10) / 10
+      : 0;
 
   return (
     <div className="min-h-screen bg-[var(--paper)] p-4 sm:p-8">

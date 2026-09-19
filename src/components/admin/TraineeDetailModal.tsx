@@ -72,6 +72,7 @@ export function TraineeDetailModal({
         console.warn('admin_delete_user RPC error, using fallback:', rpcErr);
         await supabase.from('checkins').delete().eq('user_id', trainee.id);
         await supabase.from('checkin_photos').delete().eq('user_id', trainee.id);
+        await supabase.from('trainee_profiles').delete().eq('user_id', trainee.id);
         const { error: profErr } = await supabase.from('profiles').delete().eq('id', trainee.id);
         if (profErr) throw profErr;
       }
