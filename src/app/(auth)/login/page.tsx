@@ -5,8 +5,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
+  const { refreshProfile } = useAuth();
   const [tab, setTab] = useState<'login' | 'signup' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -89,12 +91,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedName = name.trim();
+
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: trimmedEmail,
         password,
         options: {
           data: {
-            name: name.trim(),
+            name: trimmedName,
           },
         },
       });
@@ -109,12 +114,33 @@ export default function LoginPage() {
       if (data?.user) {
         await supabase.from('profiles').upsert({
           id: data.user.id,
-          email: email.trim().toLowerCase(),
-          name: name.trim(),
+          email: trimmedEmail,
+          name: trimmedName,
           role: 'user',
         });
       }
 
+      // Check if session was immediately created, or establish it via signInWithPassword
+      let activeSession = data?.session;
+      if (!activeSession) {
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
+        if (!signInErr && signInData?.session) {
+          activeSession = signInData.session;
+        }
+      }
+
+      if (activeSession) {
+        // Authenticated successfully! Refresh auth context and enter app directly
+        await refreshProfile?.();
+        router.refresh();
+        router.push('/onboarding');
+        return;
+      }
+
+      // If project has email confirmation enabled in Supabase settings
       setSuccessMsg(t('auth_signup_success'));
       setLoading(false);
     } catch {
