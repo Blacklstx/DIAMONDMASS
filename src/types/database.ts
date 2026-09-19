@@ -11,20 +11,7 @@ export interface GenderOption {
 export const GENDER_OPTIONS: GenderOption[] = [
   { value: 'male', labelTh: 'ชาย (Male)', labelEn: 'Male' },
   { value: 'female', labelTh: 'หญิง (Female)', labelEn: 'Female' },
-  { value: 'gay', labelTh: 'เกย์ (Gay)', labelEn: 'Gay' },
-  { value: 'lesbian', labelTh: 'เลสเบี้ยน (Lesbian)', labelEn: 'Lesbian' },
-  { value: 'kathoey', labelTh: 'สาวประเภทสอง / กะเทย (Trans Woman)', labelEn: 'Trans Woman' },
-  { value: 'tom', labelTh: 'ทอม (Tom)', labelEn: 'Tom' },
-  { value: 'dee', labelTh: 'ดี้ (Dee)', labelEn: 'Dee' },
-  { value: 'trans_male', labelTh: 'ชายข้ามเพศ (Transgender Male)', labelEn: 'Transgender Male' },
-  { value: 'trans_female', labelTh: 'หญิงข้ามเพศ (Transgender Female)', labelEn: 'Transgender Female' },
-  { value: 'bisexual', labelTh: 'ไบเซ็กชวล (Bisexual)', labelEn: 'Bisexual' },
-  { value: 'pansexual', labelTh: 'แพนเซ็กชวล (Pansexual)', labelEn: 'Pansexual' },
-  { value: 'non_binary', labelTh: 'นอนไบนารี (Non-binary)', labelEn: 'Non-binary' },
-  { value: 'queer_lgbtq', labelTh: 'เควียร์ / LGBTQ+', labelEn: 'Queer / LGBTQ+' },
-  { value: 'asexual', labelTh: 'เอเซ็กชวล (Asexual)', labelEn: 'Asexual' },
-  { value: 'other', labelTh: 'อื่น ๆ (ระบุเอง)', labelEn: 'Other (Custom)' },
-  { value: 'prefer_not_to_say', labelTh: 'ไม่ต้องการระบุ (Prefer not to say)', labelEn: 'Prefer not to say' },
+  { value: 'other', labelTh: 'อื่น ๆ (Other)', labelEn: 'Other' },
 ];
 
 export interface UserProfile {
