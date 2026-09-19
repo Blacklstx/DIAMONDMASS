@@ -48,14 +48,43 @@ export function TraineeDetailModal({
     ? allCheckins.filter((c) => c.user_id === trainee.id)
     : [];
 
-  // Calculate current week
+  // Calculate current week (syncs with latest logged week or calendar)
   const getCurrentWeek = (): number => {
-    if (!trainee?.start_date) return 1;
-    const start = new Date(trainee.start_date + 'T00:00:00');
-    const now = new Date();
-    const diffDays = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return 1;
-    return Math.min(16, Math.max(1, Math.floor(diffDays / 7) + 1));
+    if (!trainee) return 1;
+    let calWeek = 1;
+    if (trainee.start_date) {
+      const start = new Date(trainee.start_date + 'T00:00:00');
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0) {
+        calWeek = Math.floor(diffDays / 7) + 1;
+      }
+    }
+
+    // Check highest week with logged check-in data
+    const maxLoggedWeek = traineeCheckins.reduce((max, c) => {
+      const d = c.data;
+      if (!d) return max;
+      const hasWaist = Boolean(d.waist);
+      const hasWeights = Boolean(
+        d.days && Object.values(d.days).some((item) => item?.weight !== null && item?.weight !== undefined)
+      );
+      const hasPhotos = Boolean(
+        d.photos && (d.photos.front || d.photos.left || d.photos.right || d.photos.back)
+      );
+      const hasLifts = Boolean(
+        d.training && typeof d.training === 'object' && Object.values(d.training).some(
+          (lifts) => Array.isArray(lifts) && lifts.some((l) => l && (l.name || l.weight || l.reps))
+        )
+      );
+      const hasNotes = Boolean(d.notes && d.notes.trim().length > 0);
+
+      const hasContent = hasWaist || hasWeights || hasPhotos || hasLifts || hasNotes;
+      return hasContent && c.week > max ? c.week : max;
+    }, 1);
+
+    const maxProgramWeeks = trainee.training_days && trainee.training_days > 7 ? trainee.training_days : 16;
+    return Math.min(maxProgramWeeks, Math.max(1, Math.max(calWeek, maxLoggedWeek)));
   };
 
   const currentWeek = getCurrentWeek();

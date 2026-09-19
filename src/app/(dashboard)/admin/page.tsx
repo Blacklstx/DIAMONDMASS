@@ -89,20 +89,49 @@ export default function AdminPage() {
     );
   }
 
-  // Calculate trainee current week helper
-  const getTraineeCurrentWeek = (trainee: Profile): number => {
-    if (!trainee.start_date) return 1;
-    const start = new Date(trainee.start_date + 'T00:00:00');
-    const now = new Date();
-    const diffDays = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return 1;
-    return Math.min(16, Math.max(1, Math.floor(diffDays / 7) + 1));
+  // Calculate trainee current week helper (syncs with latest logged week or calendar)
+  const getTraineeCurrentWeek = (trainee: Profile, userCheckins: Checkin[]): number => {
+    let calWeek = 1;
+    if (trainee.start_date) {
+      const start = new Date(trainee.start_date + 'T00:00:00');
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0) {
+        calWeek = Math.floor(diffDays / 7) + 1;
+      }
+    }
+
+    // Check highest week with logged check-in data
+    const maxLoggedWeek = userCheckins.reduce((max, c) => {
+      const d = c.data;
+      if (!d) return max;
+      const hasWaist = Boolean(d.waist);
+      const hasWeights = Boolean(
+        d.days && Object.values(d.days).some((item) => item?.weight !== null && item?.weight !== undefined)
+      );
+      const hasPhotos = Boolean(
+        d.photos && (d.photos.front || d.photos.left || d.photos.right || d.photos.back)
+      );
+      const hasLifts = Boolean(
+        d.training && typeof d.training === 'object' && Object.values(d.training).some(
+          (lifts) => Array.isArray(lifts) && lifts.some((l) => l && (l.name || l.weight || l.reps))
+        )
+      );
+      const hasNotes = Boolean(d.notes && d.notes.trim().length > 0);
+
+      const hasContent = hasWaist || hasWeights || hasPhotos || hasLifts || hasNotes;
+      return hasContent && c.week > max ? c.week : max;
+    }, 1);
+
+    const maxProgramWeeks = trainee.training_days && trainee.training_days > 7 ? trainee.training_days : 16;
+    return Math.min(maxProgramWeeks, Math.max(1, Math.max(calWeek, maxLoggedWeek)));
   };
 
   // Trainee check-in stats calculation helper
   const getTraineeStats = (trainee: Profile) => {
-    const curWeek = getTraineeCurrentWeek(trainee);
     const userCheckins = allCheckins.filter((c) => c.user_id === trainee.id);
+    const curWeek = getTraineeCurrentWeek(trainee, userCheckins);
+    const totalWeeks = trainee.training_days && trainee.training_days > 7 ? trainee.training_days : 16;
 
     // Latest weight
     const weights: number[] = [];
@@ -140,16 +169,21 @@ export default function AdminPage() {
     const hasCheckedInCurrentWeek = Boolean(
       currentWeekCheckin?.data?.waist ||
       (currentWeekCheckin?.data?.days &&
-        Object.values(currentWeekCheckin.data.days).some((d) => d?.weight !== null && d?.weight !== undefined))
+        Object.values(currentWeekCheckin.data.days).some((d) => d?.weight !== null && d?.weight !== undefined)) ||
+      (currentWeekCheckin?.data?.training &&
+        Object.values(currentWeekCheckin.data.training).some((l) => Array.isArray(l) && l.length > 0)) ||
+      (currentWeekCheckin?.data?.photos &&
+        (currentWeekCheckin.data.photos.front || currentWeekCheckin.data.photos.left || currentWeekCheckin.data.photos.right || currentWeekCheckin.data.photos.back))
     );
 
     // Consistency score
-    const weeksPassed = Math.min(curWeek, 16);
+    const weeksPassed = Math.min(curWeek, totalWeeks);
     const completedCount = userCheckins.filter((c) => c.data?.waist || c.data?.days).length;
     const consistencyPct = weeksPassed > 0 ? Math.round((completedCount / weeksPassed) * 100) : 0;
 
     return {
       curWeek,
+      totalWeeks,
       userCheckins,
       startWeight,
       latestWeight,
@@ -320,6 +354,7 @@ export default function AdminPage() {
                     </h3>
                     <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--muted)]">
                       <span>Week {stats.curWeek}/16</span>
+                      <span>Week {stats.curWeek}/{stats.totalWeeks}</span>
                       <span>•</span>
                       <span className={`rounded-md border px-1.5 py-0.2 text-[10px] font-extrabold uppercase ${goalBadgeColor}`}>
                         {trainee.goal}
