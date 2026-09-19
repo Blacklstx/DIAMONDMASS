@@ -14,12 +14,6 @@ export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (!authLoading && isAdmin) {
-      router.replace('/admin');
-    }
-  }, [authLoading, isAdmin, router]);
-
   const [name, setName] = useState('');
   const [age, setAge] = useState<number | ''>('');
   const [gender, setGender] = useState('male');

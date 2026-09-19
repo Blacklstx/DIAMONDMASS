@@ -14,27 +14,30 @@ export function MobileTopBar() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--border)] bg-[var(--paper-light)] px-4 py-3 md:hidden">
-      <div className="flex items-center gap-2">
-        <div className="relative h-5 w-5">
-          <Image src="/logo.png" alt="DiamondMass" fill className="object-contain" />
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--border)] bg-[var(--paper-light)] px-3 py-2.5 md:hidden overflow-hidden">
+      <Link href="/dashboard" className="flex items-center gap-1.5 shrink-0">
+        <div className="relative h-5 w-5 shrink-0">
+          <Image src="/logo.png" alt="DiamondMass" fill className="object-contain" priority />
         </div>
-        <span className="text-xs font-extrabold tracking-wider text-[var(--brown-dark)]">
+        <span className="text-xs font-black tracking-wider text-[var(--brown-dark)] hidden min-[390px]:inline">
           DIAMONDMASS
         </span>
-      </div>
+        <span className="text-xs font-black tracking-wider text-[var(--brown-dark)] min-[390px]:hidden">
+          DM
+        </span>
+      </Link>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1 shrink-0 flex-nowrap">
         {isAdmin && (
           <Link
             href="/admin"
-            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold border transition-colors ${
+            className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black border transition-colors whitespace-nowrap shrink-0 ${
               pathname === '/admin'
                 ? 'bg-[var(--brown-dark)] text-white border-[var(--brown-dark)] shadow-sm'
                 : 'bg-[var(--cream)] text-[var(--brown-dark)] border-[var(--border)] hover:bg-[var(--cream-soft)]'
             }`}
           >
-            <ShieldCheck size={12} className={pathname === '/admin' ? 'text-amber-300' : 'text-[var(--brown)]'} />
+            <ShieldCheck size={11} className={pathname === '/admin' ? 'text-amber-300' : 'text-[var(--brown)]'} />
             <span>Admin</span>
           </Link>
         )}
@@ -43,7 +46,7 @@ export function MobileTopBar() {
           href="/tdee.html"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 rounded-full bg-[var(--cream)] px-2.5 py-1 text-[10px] font-bold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] border border-[var(--border)] transition-colors"
+          className="flex items-center gap-1 rounded-full bg-[var(--cream)] px-2 py-0.5 text-[10px] font-bold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] border border-[var(--border)] transition-colors whitespace-nowrap shrink-0"
         >
           <Calculator size={11} className="text-[var(--brown)]" />
           <span>TDEE</span>
@@ -53,17 +56,17 @@ export function MobileTopBar() {
           href="https://diamondmasszerotomassebook.netlify.app/"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 rounded-full bg-[var(--cream)] px-2.5 py-1 text-[10px] font-bold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] border border-[var(--border)] transition-colors"
+          className="flex items-center gap-1 rounded-full bg-[var(--cream)] px-2 py-0.5 text-[10px] font-bold text-[var(--brown-dark)] hover:bg-[var(--cream-soft)] border border-[var(--border)] transition-colors whitespace-nowrap shrink-0"
         >
           <span>E-Book</span>
         </a>
 
-        <div className="flex overflow-hidden rounded-full border border-[var(--border)]">
+        <div className="flex overflow-hidden rounded-full border border-[var(--border)] shrink-0">
           <button
             type="button"
             onClick={() => setLanguage('th')}
-            className={`px-2.5 py-0.5 text-[10px] font-extrabold transition-colors ${
-              language === 'th' ? 'bg-[var(--brown-dark)] text-white' : 'text-[var(--muted)]'
+            className={`px-1.5 py-0.5 text-[9px] font-black transition-colors ${
+              language === 'th' ? 'bg-[var(--brown-dark)] text-white' : 'text-[var(--muted)] bg-[var(--paper-light)]'
             }`}
           >
             TH
@@ -71,8 +74,8 @@ export function MobileTopBar() {
           <button
             type="button"
             onClick={() => setLanguage('en')}
-            className={`px-2.5 py-0.5 text-[10px] font-extrabold transition-colors ${
-              language === 'en' ? 'bg-[var(--brown-dark)] text-white' : 'text-[var(--muted)]'
+            className={`px-1.5 py-0.5 text-[9px] font-black transition-colors ${
+              language === 'en' ? 'bg-[var(--brown-dark)] text-white' : 'text-[var(--muted)] bg-[var(--paper-light)]'
             }`}
           >
             EN

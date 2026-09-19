@@ -63,15 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(userIsAdmin);
 
       // 2. Fetch trainee profile (all the separated fitness data)
-      let traineeData: any = null;
-      if (!userIsAdmin) {
-        const { data: tData } = await supabase
-          .from('trainee_profiles')
-          .select('*')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-        traineeData = tData;
-      }
+      const { data: tData } = await supabase
+        .from('trainee_profiles')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+      const traineeData = tData;
 
       // Merge user account + trainee fitness data for backwards compatibility
       setProfile({
@@ -137,15 +134,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userIsAdmin = pData?.role === 'admin';
     setIsAdmin(userIsAdmin);
 
-    let traineeData: any = null;
-    if (!userIsAdmin) {
-      const { data: tData } = await supabase
-        .from('trainee_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      traineeData = tData;
-    }
+    const { data: tData } = await supabase
+      .from('trainee_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const traineeData = tData;
 
     setProfile({
       ...(pData || { id: user.id, role: 'user' }),

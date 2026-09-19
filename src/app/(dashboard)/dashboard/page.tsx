@@ -9,25 +9,33 @@ import { ArrowRight, CheckCircle2, ChevronRight, ShieldCheck } from 'lucide-reac
 
 export default function DashboardPage() {
   const { profile, checkins, currentWeek, getWeekStatus, isAdmin } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   if (!profile || !profile.start_weight) {
     if (isAdmin) {
       return (
-        <div className="card text-center py-12 max-w-md mx-auto">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-900 border border-amber-300">
-            <ShieldCheck size={26} />
+        <div className="card text-center py-10 max-w-lg mx-auto">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-900 border border-amber-300 shadow-sm">
+            <ShieldCheck size={30} />
           </div>
-          <h2 className="text-base font-extrabold text-[var(--brown-dark)] mb-2">
-            แดชบอร์ดผู้ดูแลระบบ (Admin / Coach)
+          <h2 className="text-lg font-black text-[var(--brown-dark)] mb-2">
+            {language === 'th' ? 'แดชบอร์ดผู้ดูแลระบบ (Admin / Coach)' : 'Admin & Coach Dashboard'}
           </h2>
-          <p className="text-xs text-[var(--muted)] mb-5">
-            คุณเข้าสู่ระบบในฐานะแอดมิน ไม่จำเป็นต้องกรอกข้อมูลลูกเทรน
+          <p className="text-xs text-[var(--muted)] mb-6 max-w-md mx-auto leading-relaxed">
+            {language === 'th'
+              ? 'คุณเข้าสู่ระบบในฐานะแอดมิน คุณสามารถเลือกเริ่มบันทึกและติดตามผลของตัวเอง หรือเข้าสู่ระบบจัดการลูกเทรน'
+              : 'You are logged in as Admin. You can track your personal fitness progress or manage trainees in the admin dashboard.'}
           </p>
-          <Link href="/admin" className="btn primary small inline-flex items-center gap-2">
-            <ShieldCheck size={16} />
-            <span>ไปที่แดชบอร์ดแอดมิน</span>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/onboarding" className="btn primary small w-full sm:w-auto flex items-center justify-center gap-2">
+              <span>{language === 'th' ? 'เริ่มติดตามผลตัวเอง' : 'Start Personal Tracking'}</span>
+              <ArrowRight size={14} />
+            </Link>
+            <Link href="/admin" className="btn secondary small w-full sm:w-auto flex items-center justify-center gap-2">
+              <ShieldCheck size={14} />
+              <span>{language === 'th' ? 'ไปที่แดชบอร์ดจัดการลูกเทรน' : 'Go to Admin Roster'}</span>
+            </Link>
+          </div>
         </div>
       );
     }
@@ -155,6 +163,35 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Admin Switcher Banner */}
+      {isAdmin && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 to-amber-100/60 p-4 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-200 text-amber-900 border border-amber-300">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-black text-amber-950">
+                {language === 'th' ? 'โหมดติดตามผลส่วนตัวของแอดมิน (Admin Tracking)' : 'Admin Personal Tracking Mode'}
+              </p>
+              <p className="text-[11px] text-amber-800">
+                {language === 'th'
+                  ? 'คุณกำลังดูสถิติและกราฟส่วนตัวของคุณ สามารถสลับไปหน้าจัดการลูกเทรนได้ตลอดเวลา'
+                  : 'You are viewing your personal stats. Switch to coach management anytime.'}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin"
+            className="btn primary small flex items-center gap-1.5 text-xs shrink-0 self-end sm:self-auto"
+          >
+            <ShieldCheck size={14} />
+            <span>{language === 'th' ? 'แดชบอร์ดจัดการลูกเทรน' : 'Manage Trainees'}</span>
+            <ChevronRight size={13} />
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>

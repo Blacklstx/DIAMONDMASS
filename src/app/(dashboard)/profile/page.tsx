@@ -104,54 +104,52 @@ export default function ProfilePage() {
 
       if (pErr) throw pErr;
 
-      // 2. If trainee, update all fitness metrics in trainee_profiles
-      if (!isAdmin) {
-        const { error: tErr } = await supabase
-          .from('trainee_profiles')
-          .upsert({
-            user_id: user.id,
-            goal,
-            start_date: startDate || null,
-            start_weight: startWeight === '' ? null : Number(startWeight),
-            target_weight: targetWeight === '' ? null : Number(targetWeight),
-            start_waist: startWaist === '' ? null : Number(startWaist),
-            age: age === '' ? null : Number(age),
-            height: height === '' ? null : Number(height),
-            training_days: trainingDays === '' ? 16 : Number(trainingDays),
-            calorie_target: calorieTarget === '' ? null : Number(calorieTarget),
-            protein_target: proteinTarget === '' ? null : Number(proteinTarget),
-            steps_target: stepsTarget === '' ? 8000 : Number(stepsTarget),
-            cardio_target: cardioTarget === '' ? null : Number(cardioTarget),
-            allow_future_checkins: true,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'user_id' });
+      // 2. Save/update all fitness metrics in trainee_profiles
+      const { error: tErr } = await supabase
+        .from('trainee_profiles')
+        .upsert({
+          user_id: user.id,
+          goal,
+          start_date: startDate || null,
+          start_weight: startWeight === '' ? null : Number(startWeight),
+          target_weight: targetWeight === '' ? null : Number(targetWeight),
+          start_waist: startWaist === '' ? null : Number(startWaist),
+          age: age === '' ? null : Number(age),
+          height: height === '' ? null : Number(height),
+          training_days: trainingDays === '' ? 16 : Number(trainingDays),
+          calorie_target: calorieTarget === '' ? null : Number(calorieTarget),
+          protein_target: proteinTarget === '' ? null : Number(proteinTarget),
+          steps_target: stepsTarget === '' ? 8000 : Number(stepsTarget),
+          cardio_target: cardioTarget === '' ? null : Number(cardioTarget),
+          allow_future_checkins: true,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
 
-        if (tErr) throw tErr;
+      if (tErr) throw tErr;
 
-        // Keep Week 1 checkin day1 weight & waist in sync
-        if (startWeight || startWaist) {
-          const { data: w1 } = await supabase
-            .from('checkins')
-            .select('data')
-            .eq('user_id', user.id)
-            .eq('week', 1)
-            .maybeSingle();
+      // Keep Week 1 checkin day1 weight & waist in sync
+      if (startWeight || startWaist) {
+        const { data: w1 } = await supabase
+          .from('checkins')
+          .select('data')
+          .eq('user_id', user.id)
+          .eq('week', 1)
+          .maybeSingle();
 
-          const curData = w1?.data || {};
-          const curDays = curData.days || {};
-          await supabase.from('checkins').upsert({
-            user_id: user.id,
-            week: 1,
-            data: {
-              ...curData,
-              days: {
-                ...curDays,
-                day1: { weight: startWeight === '' ? null : Number(startWeight) },
-              },
-              waist: startWaist === '' ? null : Number(startWaist),
+        const curData = w1?.data || {};
+        const curDays = curData.days || {};
+        await supabase.from('checkins').upsert({
+          user_id: user.id,
+          week: 1,
+          data: {
+            ...curData,
+            days: {
+              ...curDays,
+              day1: { weight: startWeight === '' ? null : Number(startWeight) },
             },
-          }, { onConflict: 'user_id,week' });
-        }
+            waist: startWaist === '' ? null : Number(startWaist),
+          },
+        }, { onConflict: 'user_id,week' });
       }
 
       await refreshProfile();
@@ -296,9 +294,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {!isAdmin && (
-            <>
-              {/* Section 2: Program & Goal */}
+          {/* Section 2: Program & Goal */}
               <div>
                 <h2 className="text-xs font-black tracking-widest text-[var(--brown-dark)] uppercase border-b-2 border-[var(--brown)] pb-1.5 mb-3">
                   {language === 'th' ? '2. โปรแกรมและเป้าหมาย' : '2. Program & Goals'}
@@ -448,8 +444,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-            </>
-          )}
 
           <button type="submit" disabled={saving} className="btn primary w-full mt-4 flex items-center justify-center gap-2 cursor-pointer">
             <Save size={15} />
