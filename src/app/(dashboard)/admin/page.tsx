@@ -353,7 +353,6 @@ export default function AdminPage() {
                       {trainee.name || 'Unnamed Trainee'}
                     </h3>
                     <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--muted)]">
-                      <span>Week {stats.curWeek}/16</span>
                       <span>Week {stats.curWeek}/{stats.totalWeeks}</span>
                       <span>•</span>
                       <span className={`rounded-md border px-1.5 py-0.2 text-[10px] font-extrabold uppercase ${goalBadgeColor}`}>
