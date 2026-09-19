@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -15,6 +15,9 @@ import {
   ChevronRight,
   Save,
   Check,
+  CheckCircle2,
+  Loader2,
+  Cloud,
 } from 'lucide-react';
 
 export default function CheckinPage() {
@@ -23,12 +26,11 @@ export default function CheckinPage() {
   const weekNum = Math.min(16, Math.max(1, parseInt(weekParam, 10) || 1));
 
   const { user, profile, checkins, currentWeek, refreshCheckins, getWeekStatus } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const supabase = createClient();
 
   // Active checkin data state
-  const existingCheckin = checkins.find((c) => c.week === weekNum);
   const [data, setData] = useState<CheckinData>({});
   const [activeDayKey, setActiveDayKey] = useState<string>('day1');
   const [signedPhotoUrls, setSignedPhotoUrls] = useState<Record<string, string>>({});
@@ -36,10 +38,37 @@ export default function CheckinPage() {
   const [saving, setSaving] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
 
-  // Initialize form state from database
+  // Auto-save state and refs
+  type AutoSaveStatus = 'idle' | 'unsaved' | 'saving' | 'saved' | 'error';
+  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+
+  const dataRef = useRef<CheckinData>(data);
+  dataRef.current = data;
+
+  const weekNumRef = useRef<number>(weekNum);
+  weekNumRef.current = weekNum;
+
+  const isSavingRef = useRef<boolean>(false);
+  const isUserDirtyRef = useRef<boolean>(false);
+  const ignoreNextDataChangeRef = useRef<boolean>(true);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLoadedForWeekRef = useRef<number | null>(null);
+
+  // Initialize form state from database when weekNum changes
   useEffect(() => {
-    if (existingCheckin?.data) {
-      setData(existingCheckin.data);
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    isUserDirtyRef.current = false;
+    setAutoSaveStatus('idle');
+    setLastSavedTime(null);
+    ignoreNextDataChangeRef.current = true;
+
+    const existing = checkins.find((c) => c.week === weekNum);
+    if (existing?.data) {
+      setData(existing.data);
     } else {
       setData({
         days: {
@@ -55,7 +84,57 @@ export default function CheckinPage() {
         photos: {},
       });
     }
-  }, [existingCheckin, weekNum]);
+    isLoadedForWeekRef.current = weekNum;
+  }, [weekNum]);
+
+  // If checkins arrive after initial mount and user has not typed yet
+  useEffect(() => {
+    if (!isUserDirtyRef.current && isLoadedForWeekRef.current === weekNum) {
+      const existing = checkins.find((c) => c.week === weekNum);
+      if (existing?.data) {
+        ignoreNextDataChangeRef.current = true;
+        setData(existing.data);
+      }
+    }
+  }, [checkins, weekNum]);
+
+  // Auto-save debounced effect on data changes
+  useEffect(() => {
+    if (ignoreNextDataChangeRef.current) {
+      ignoreNextDataChangeRef.current = false;
+      return;
+    }
+    if (!user) return;
+
+    isUserDirtyRef.current = true;
+    setAutoSaveStatus('unsaved');
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      executeSave(dataRef.current, true);
+    }, 1200);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [data, user]);
+
+  // Warning before unloading if unsaved changes exist
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isUserDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   // Load signed URLs for photos from Supabase Storage
   useEffect(() => {
@@ -104,6 +183,7 @@ export default function CheckinPage() {
 
       const newPhotos = { ...(data.photos || {}), [view]: true };
       const updatedData = { ...data, photos: newPhotos };
+      ignoreNextDataChangeRef.current = true;
       setData(updatedData);
 
       // Persist to checkins table
@@ -124,6 +204,11 @@ export default function CheckinPage() {
       } catch (tableErr) {
         console.warn('checkin_photos table update ignored:', tableErr);
       }
+
+      const now = new Date();
+      setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setAutoSaveStatus('saved');
+      isUserDirtyRef.current = false;
 
       await refreshCheckins();
       showToast(t('toast_photo_saved'));
@@ -147,6 +232,7 @@ export default function CheckinPage() {
       const newPhotos = { ...(data.photos || {}) };
       delete newPhotos[view];
       const updatedData = { ...data, photos: newPhotos };
+      ignoreNextDataChangeRef.current = true;
       setData(updatedData);
 
       setSignedPhotoUrls((prev) => {
@@ -172,6 +258,11 @@ export default function CheckinPage() {
       } catch (tableErr) {
         console.warn('checkin_photos table update ignored:', tableErr);
       }
+
+      const now = new Date();
+      setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setAutoSaveStatus('saved');
+      isUserDirtyRef.current = false;
 
       await refreshCheckins();
       showToast(t('toast_photo_removed'));
@@ -227,29 +318,75 @@ export default function CheckinPage() {
     }));
   };
 
-  // Save full check-in
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Core save executor for auto-save and manual save
+  const executeSave = async (dataToSave: CheckinData, isAuto: boolean = false) => {
     if (!user) return;
-    setSaving(true);
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+
+    if (isAuto) {
+      setAutoSaveStatus('saving');
+    } else {
+      setSaving(true);
+      setAutoSaveStatus('saving');
+    }
 
     try {
+      const targetWeek = weekNumRef.current;
       const { error } = await supabase.from('checkins').upsert({
         user_id: user.id,
-        week: weekNum,
-        data,
+        week: targetWeek,
+        data: dataToSave,
       }, { onConflict: 'user_id,week' });
 
       if (error) throw error;
 
-      await refreshCheckins();
-      showToast(t('toast_week_saved', weekNum));
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastSavedTime(timeStr);
+      setAutoSaveStatus('saved');
+      isUserDirtyRef.current = false;
+
+      refreshCheckins();
+
+      if (!isAuto) {
+        showToast(t('toast_week_saved', targetWeek));
+      }
     } catch (err: any) {
-      console.error(err);
-      showToast(t('toast_save_failed'));
+      console.error('Save checkin error:', err);
+      setAutoSaveStatus('error');
+      if (!isAuto) {
+        showToast(t('toast_save_failed'));
+      }
     } finally {
-      setSaving(false);
+      isSavingRef.current = false;
+      if (!isAuto) {
+        setSaving(false);
+      }
     }
+  };
+
+  // Explicit manual save triggered by the Save Button
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    await executeSave(dataRef.current, false);
+  };
+
+  // Safe week transition (flushes pending autosave before changing week)
+  const handleWeekChange = async (targetWeek: number) => {
+    if (targetWeek === weekNum) return;
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    if (isUserDirtyRef.current) {
+      await executeSave(dataRef.current, true);
+    }
+    router.push(`/checkin/${targetWeek}`);
   };
 
   const dayLabels = [
@@ -274,9 +411,35 @@ export default function CheckinPage() {
       {/* Week Selector Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black text-[var(--brown-dark)]">
-            {t('checkin_title')}
-          </h1>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl font-black text-[var(--brown-dark)]">
+              {t('checkin_title')}
+            </h1>
+            {/* Auto-save status badge */}
+            {autoSaveStatus === 'saving' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-[var(--brown-dark)] border border-amber-500/30">
+                <Loader2 size={11} className="animate-spin text-[var(--brown)]" />
+                <span>{t('autosave_saving')}</span>
+              </span>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30">
+                <CheckCircle2 size={11} className="text-emerald-600" />
+                <span>{t('autosave_saved')}</span>
+              </span>
+            )}
+            {autoSaveStatus === 'unsaved' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 border border-amber-500/30">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <span>{t('autosave_unsaved')}</span>
+              </span>
+            )}
+            {autoSaveStatus === 'error' && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 border border-rose-500/30">
+                <span>{t('autosave_error')}</span>
+              </span>
+            )}
+          </div>
           <p className="text-xs font-bold text-[var(--muted)]">
             {t('checkin_sub', weekNum)}
           </p>
@@ -287,15 +450,15 @@ export default function CheckinPage() {
           <button
             type="button"
             disabled={weekNum <= 1}
-            onClick={() => router.push(`/checkin/${weekNum - 1}`)}
-            className="btn secondary small disabled:opacity-30"
+            onClick={() => handleWeekChange(weekNum - 1)}
+            className="btn secondary small disabled:opacity-30 cursor-pointer"
           >
             <ChevronLeft size={14} />
           </button>
           <select
             value={weekNum}
-            onChange={(e) => router.push(`/checkin/${e.target.value}`)}
-            className="rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-3 py-1.5 text-xs font-black text-[var(--brown-dark)] outline-none"
+            onChange={(e) => handleWeekChange(Number(e.target.value))}
+            className="rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-3 py-1.5 text-xs font-black text-[var(--brown-dark)] outline-none cursor-pointer"
           >
             {Array.from({ length: 16 }, (_, i) => i + 1).map((w) => (
               <option key={w} value={w}>
@@ -306,8 +469,8 @@ export default function CheckinPage() {
           <button
             type="button"
             disabled={weekNum >= 16}
-            onClick={() => router.push(`/checkin/${weekNum + 1}`)}
-            className="btn secondary small disabled:opacity-30"
+            onClick={() => handleWeekChange(weekNum + 1)}
+            className="btn secondary small disabled:opacity-30 cursor-pointer"
           >
             <ChevronRight size={14} />
           </button>
@@ -780,16 +943,69 @@ export default function CheckinPage() {
             </div>
           </div>
 
-          {/* Save Button */}
+          {/* Save & Auto-save Action Bar */}
           <div className="sticky bottom-16 sm:bottom-6 z-20">
-            <button
-              type="submit"
-              disabled={saving}
-              className="btn primary w-full shadow-lg flex items-center justify-center gap-2 py-3 text-sm"
-            >
-              <Save size={16} />
-              <span>{saving ? '...' : t('saveWeek', weekNum)}</span>
-            </button>
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--paper-light)]/95 backdrop-blur-md p-3 sm:p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs font-bold w-full sm:w-auto justify-center sm:justify-start">
+                {autoSaveStatus === 'saving' && (
+                  <span className="flex items-center gap-2 text-[var(--brown-dark)] bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/30">
+                    <Loader2 size={13} className="animate-spin text-[var(--brown)]" />
+                    <span>{t('autosave_saving')}</span>
+                  </span>
+                )}
+                {autoSaveStatus === 'saved' && (
+                  <span className="flex items-center gap-2 text-emerald-700 bg-emerald-500/10 px-3.5 py-1.5 rounded-full border border-emerald-500/30">
+                    <CheckCircle2 size={13} className="text-emerald-600" />
+                    <span>{t('autosave_saved')}{lastSavedTime ? ` (${lastSavedTime})` : ''}</span>
+                  </span>
+                )}
+                {autoSaveStatus === 'unsaved' && (
+                  <span className="flex items-center gap-2 text-amber-700 bg-amber-500/10 px-3.5 py-1.5 rounded-full border border-amber-500/30">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span>{t('autosave_unsaved')}</span>
+                  </span>
+                )}
+                {autoSaveStatus === 'error' && (
+                  <span className="flex items-center gap-2 text-rose-700 bg-rose-500/10 px-3.5 py-1.5 rounded-full border border-rose-500/30">
+                    <span>{t('autosave_error')}</span>
+                  </span>
+                )}
+                {autoSaveStatus === 'idle' && (
+                  <span className="flex items-center gap-2 text-[var(--muted)] px-1 py-1">
+                    {lastSavedTime ? (
+                      <>
+                        <CheckCircle2 size={13} className="text-emerald-600" />
+                        <span>{t('autosave_saved')} ({lastSavedTime})</span>
+                      </>
+                    ) : (
+                      <>
+                        <Cloud size={13} className="text-[var(--muted)]" />
+                        <span>{language === 'th' ? 'ระบบบันทึกอัตโนมัติเปิดใช้งานอยู่' : 'Auto-save is active'}</span>
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
+
+              {/* Explicit Save Button */}
+              <button
+                type="submit"
+                disabled={saving || isSavingRef.current}
+                className="btn primary w-full sm:w-auto shadow-md flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-black cursor-pointer shrink-0"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>{language === 'th' ? 'กำลังบันทึก...' : 'Saving...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={15} />
+                    <span>{t('saveWeek', weekNum)}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
     </div>
