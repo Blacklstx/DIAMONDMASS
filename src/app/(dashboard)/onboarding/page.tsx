@@ -10,7 +10,7 @@ import { GoalType, GENDER_OPTIONS } from '@/types/database';
 
 export default function OnboardingPage() {
   const { user, profile, isAdmin, refreshProfile, loading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const supabase = createClient();
 
@@ -23,6 +23,7 @@ export default function OnboardingPage() {
   const [name, setName] = useState('');
   const [age, setAge] = useState<number | ''>('');
   const [gender, setGender] = useState('male');
+  const [customGender, setCustomGender] = useState('');
   const [height, setHeight] = useState<number | ''>('');
   const [goal, setGoal] = useState<GoalType>('cutting');
   const [startWeight, setStartWeight] = useState<number | ''>('');
@@ -40,7 +41,19 @@ export default function OnboardingPage() {
     if (profile) {
       setName(profile.name || '');
       setAge(profile.age || '');
-      setGender(profile.gender || 'male');
+      if (profile.gender) {
+        const isStandard = GENDER_OPTIONS.some((o) => o.value === profile.gender);
+        if (isStandard) {
+          setGender(profile.gender);
+          setCustomGender('');
+        } else {
+          setGender('other');
+          setCustomGender(profile.gender);
+        }
+      } else {
+        setGender('male');
+        setCustomGender('');
+      }
       setHeight(profile.height || '');
       setGoal(profile.goal || 'cutting');
       setStartWeight(profile.start_weight || '');
@@ -62,11 +75,12 @@ export default function OnboardingPage() {
 
     try {
       // 1. Update basic identity in profiles table (stores only email, name, gender, role)
+      const finalGender = gender === 'other' && customGender.trim() ? customGender.trim() : gender;
       await supabase
         .from('profiles')
         .update({
           name: name || null,
-          gender,
+          gender: finalGender,
         })
         .eq('id', user.id);
 
@@ -162,10 +176,16 @@ export default function OnboardingPage() {
             </div>
             <div className="field">
               <label>{t('ob_gender')}</label>
-              <select value={gender} onChange={(e) => setGender(e.target.value)}>
+              <select
+                value={gender}
+                onChange={(e) => {
+                  setGender(e.target.value);
+                  if (e.target.value !== 'other') setCustomGender('');
+                }}
+              >
                 {GENDER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.labelTh}
+                    {language === 'th' ? opt.labelTh : opt.labelEn}
                   </option>
                 ))}
               </select>
@@ -181,6 +201,18 @@ export default function OnboardingPage() {
               />
             </div>
           </div>
+
+          {gender === 'other' && (
+            <div className="field animate-fade-in">
+              <label>{language === 'th' ? 'ระบุเพศของคุณ' : 'Specify your gender'}</label>
+              <input
+                type="text"
+                value={customGender}
+                onChange={(e) => setCustomGender(e.target.value)}
+                placeholder={language === 'th' ? 'โปรดระบุเพศของคุณ...' : 'Please specify...'}
+              />
+            </div>
+          )}
 
           {/* Goal Selector */}
           <div className="field">
