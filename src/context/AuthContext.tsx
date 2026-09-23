@@ -191,7 +191,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       const hasLifts = Boolean(
         d.training && typeof d.training === 'object' && Object.values(d.training).some(
-          (lifts) => Array.isArray(lifts) && lifts.some((l) => l && (l.name || l.weight || l.reps))
           (lifts) => Array.isArray(lifts) && lifts.some((l: any) => l && (l.name || l.weight || l.reps || (l.sets && l.sets.length > 0)))
         )
       );
