@@ -182,7 +182,7 @@ export default function AdminPage() {
       );
       const hasLifts = Boolean(
         d.training && typeof d.training === 'object' && Object.values(d.training).some(
-          (lifts) => Array.isArray(lifts) && lifts.some((l) => l && (l.name || l.weight || l.reps))
+          (lifts) => Array.isArray(lifts) && lifts.some((l: any) => l && (l.name || l.weight || l.reps || (l.sets && l.sets.length > 0)))
         )
       );
       const hasNotes = Boolean(d.notes && d.notes.trim().length > 0);
@@ -239,7 +239,9 @@ export default function AdminPage() {
       (currentWeekCheckin?.data?.days &&
         Object.values(currentWeekCheckin.data.days).some((d) => d?.weight !== null && d?.weight !== undefined)) ||
       (currentWeekCheckin?.data?.training &&
-        Object.values(currentWeekCheckin.data.training).some((l) => Array.isArray(l) && l.length > 0)) ||
+        Object.values(currentWeekCheckin.data.training).some((l: any) =>
+          Array.isArray(l) && l.some((x: any) => x && (x.name || x.weight || x.reps || (x.sets && x.sets.length > 0)))
+        )) ||
       (currentWeekCheckin?.data?.photos &&
         (currentWeekCheckin.data.photos.front || currentWeekCheckin.data.photos.left || currentWeekCheckin.data.photos.right || currentWeekCheckin.data.photos.back))
     );

@@ -602,7 +602,7 @@ export function TraineeDetailModal({
                 {dayLabels.map((d) => {
                   const dLifts = checkinData.training?.[d.key];
                   const count = Array.isArray(dLifts)
-                    ? dLifts.filter((l) => l && (l.name || l.weight || l.reps)).length
+                    ? dLifts.filter((l) => l && (l.name || l.weight || l.reps || (l.sets && l.sets.length > 0))).length
                     : 0;
                   const isActive = activeTrainingDay === d.key;
 
@@ -633,28 +633,56 @@ export function TraineeDetailModal({
               </div>
 
               {/* Lifts list */}
-              {activeLifts.filter((l) => l && (l.name || l.weight || l.reps)).length === 0 ? (
+              {activeLifts.filter((l) => l && (l.name || l.weight || l.reps || (l.sets && l.sets.length > 0))).length === 0 ? (
                 <div className="rounded-xl border border-dashed border-[var(--border)] bg-white p-4 text-center text-xs text-[var(--muted)] font-semibold">
                   ไม่มีการบันทึกท่าฝึกซ้อมสำหรับวันนี้
                 </div>
               ) : (
                 <div className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] bg-white">
                   {activeLifts
-                    .filter((l) => l && (l.name || l.weight || l.reps))
-                    .map((lift, idx) => (
-                      <div key={idx} className="flex items-center justify-between gap-2 p-2.5 text-xs">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="h-5 w-5 shrink-0 rounded-full bg-[var(--cream)] text-center text-[10px] font-black leading-5 text-[var(--brown-dark)]">
-                            {idx + 1}
-                          </span>
-                          <span className="font-extrabold text-[var(--brown-dark)] truncate">{lift.name}</span>
+                    .filter((l) => l && (l.name || l.weight || l.reps || (l.sets && l.sets.length > 0)))
+                    .map((lift, idx) => {
+                      const sets =
+                        Array.isArray(lift.sets) && lift.sets.length > 0
+                          ? lift.sets
+                          : lift.weight !== null || lift.reps !== null
+                          ? [{ weight: lift.weight, reps: lift.reps }]
+                          : [];
+
+                      return (
+                        <div key={idx} className="p-3 text-xs space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--brown-dark)] text-white text-[10px] font-black">
+                                {idx + 1}
+                              </span>
+                              <span className="font-extrabold text-[var(--brown-dark)] truncate text-xs sm:text-sm">
+                                {lift.name || `ท่าที่ ${idx + 1}`}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-bold text-[var(--muted)] shrink-0">
+                              {sets.length} เซ็ต
+                            </span>
+                          </div>
+
+                          {sets.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pl-7">
+                              {sets.map((st, sIdx) => (
+                                <span
+                                  key={sIdx}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--cream-soft)] px-2.5 py-1 text-[11px] font-bold text-[var(--brown-dark)]"
+                                >
+                                  <span className="text-[9px] font-extrabold text-[var(--brown)]">Set {sIdx + 1}:</span>
+                                  <span>{st.weight !== null ? `${st.weight} kg` : '-'}</span>
+                                  <span className="text-[var(--muted)]">×</span>
+                                  <span>{st.reps !== null ? `${st.reps} ครั้ง` : '-'}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0 font-black text-[var(--muted)] text-[11px]">
-                          {lift.weight !== null && <span>{lift.weight} kg</span>}
-                          {lift.reps !== null && <span>{lift.reps} ครั้ง</span>}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               )}
             </div>

@@ -65,10 +65,16 @@ export interface Profile extends UserProfile {
   coach_share_active?: boolean;
 }
 
-export interface TrainingLift {
-  name: string;
+export interface TrainingSet {
   weight: number | null;
   reps: number | null;
+}
+
+export interface TrainingLift {
+  name: string;
+  weight?: number | null;
+  reps?: number | null;
+  sets?: TrainingSet[];
 }
 
 export interface DayWeight {

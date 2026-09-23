@@ -140,7 +140,9 @@ export default function DashboardPage() {
         // sessions
         const planned = profile.training_days && profile.training_days <= 7 ? profile.training_days : 4;
         const count = Object.values(c.data.training).filter(
-          (lifts) => Array.isArray(lifts) && lifts.some((s) => s && (s.name || s.weight || s.reps))
+          (lifts) =>
+            Array.isArray(lifts) &&
+            lifts.some((s) => s && (s.name || s.weight || s.reps || (s.sets && s.sets.length > 0)))
         ).length;
         totalAdherenceTraining += Math.min(1, count / planned);
       } else {

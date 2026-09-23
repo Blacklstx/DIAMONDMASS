@@ -18,6 +18,10 @@ import {
   CheckCircle2,
   Loader2,
   Cloud,
+  Plus,
+  X,
+  Dumbbell,
+  Layers,
 } from 'lucide-react';
 
 export default function CheckinPage() {
@@ -300,22 +304,104 @@ export default function CheckinPage() {
       ? Math.round((weeklyAvgWeight - prevAvgWeight) * 10) / 10
       : null;
 
-  // Training log lifts for active day
-  const currentDayLifts = data.training?.[activeDayKey] || [];
+  // Training log lifts for active day (normalized with dynamic sets)
+  const rawDayLifts = data.training?.[activeDayKey];
+  const currentDayLifts: TrainingLift[] =
+    rawDayLifts && rawDayLifts.length > 0
+      ? rawDayLifts.map((l) => ({
+          name: l.name || '',
+          weight: l.weight ?? null,
+          reps: l.reps ?? null,
+          sets:
+            Array.isArray(l.sets) && l.sets.length > 0
+              ? l.sets.map((s) => ({ weight: s.weight ?? null, reps: s.reps ?? null }))
+              : [{ weight: l.weight ?? null, reps: l.reps ?? null }],
+        }))
+      : [{ name: '', weight: null, reps: null, sets: [{ weight: null, reps: null }] }];
 
-  const updateLift = (index: number, field: keyof TrainingLift, value: any) => {
-    const lifts = [...currentDayLifts];
-    if (!lifts[index]) {
-      lifts[index] = { name: '', weight: null, reps: null };
-    }
-    lifts[index] = { ...lifts[index], [field]: value };
+  const setLiftsForActiveDay = (newLifts: TrainingLift[]) => {
     setData((prev) => ({
       ...prev,
       training: {
         ...(prev.training || {}),
-        [activeDayKey]: lifts,
+        [activeDayKey]: newLifts,
       },
     }));
+  };
+
+  const updateExerciseName = (exIdx: number, name: string) => {
+    const updated = currentDayLifts.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      return { ...ex, name };
+    });
+    setLiftsForActiveDay(updated);
+  };
+
+  const addExercise = () => {
+    const updated = [
+      ...currentDayLifts,
+      { name: '', weight: null, reps: null, sets: [{ weight: null, reps: null }] },
+    ];
+    setLiftsForActiveDay(updated);
+  };
+
+  const removeExercise = (exIdx: number) => {
+    const updated = currentDayLifts.filter((_, i) => i !== exIdx);
+    if (updated.length === 0) {
+      updated.push({ name: '', weight: null, reps: null, sets: [{ weight: null, reps: null }] });
+    }
+    setLiftsForActiveDay(updated);
+  };
+
+  const addSet = (exIdx: number) => {
+    const updated = currentDayLifts.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      const curSets = ex.sets && ex.sets.length > 0 ? [...ex.sets] : [{ weight: ex.weight ?? null, reps: ex.reps ?? null }];
+      const lastSet = curSets[curSets.length - 1];
+      const newSet = {
+        weight: lastSet?.weight ?? null,
+        reps: lastSet?.reps ?? null,
+      };
+      return {
+        ...ex,
+        sets: [...curSets, newSet],
+      };
+    });
+    setLiftsForActiveDay(updated);
+  };
+
+  const removeSet = (exIdx: number, setIdx: number) => {
+    const updated = currentDayLifts.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      const curSets = ex.sets && ex.sets.length > 0 ? [...ex.sets] : [{ weight: ex.weight ?? null, reps: ex.reps ?? null }];
+      if (curSets.length <= 1) return ex;
+      const nextSets = curSets.filter((_, s) => s !== setIdx);
+      return {
+        ...ex,
+        weight: nextSets[0]?.weight ?? null,
+        reps: nextSets[0]?.reps ?? null,
+        sets: nextSets,
+      };
+    });
+    setLiftsForActiveDay(updated);
+  };
+
+  const updateSet = (exIdx: number, setIdx: number, field: 'weight' | 'reps', value: number | null) => {
+    const updated = currentDayLifts.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      const curSets = ex.sets && ex.sets.length > 0 ? [...ex.sets] : [{ weight: ex.weight ?? null, reps: ex.reps ?? null }];
+      const nextSets = curSets.map((s, sIdx) => {
+        if (sIdx !== setIdx) return s;
+        return { ...s, [field]: value };
+      });
+      return {
+        ...ex,
+        weight: setIdx === 0 && field === 'weight' ? value : ex.weight ?? nextSets[0]?.weight ?? null,
+        reps: setIdx === 0 && field === 'reps' ? value : ex.reps ?? nextSets[0]?.reps ?? null,
+        sets: nextSets,
+      };
+    });
+    setLiftsForActiveDay(updated);
   };
 
   // Core save executor for auto-save and manual save
@@ -761,23 +847,39 @@ export default function CheckinPage() {
             </div>
           </div>
 
-          {/* SECTION E: TRAINING LOG (7-DAY TABS x 10 LIFTS) */}
+          {/* SECTION E: TRAINING LOG (DYNAMIC EXERCISES & MULTI-SETS) */}
           <div className="card space-y-4">
-            <div className="border-b-2 border-[var(--brown)] pb-1.5">
-              <h2 className="text-xs font-black tracking-widest text-[var(--brown-dark)] uppercase">
-                {t('sec_training')}
-              </h2>
-              <p className="text-[11px] font-semibold text-[var(--muted)] mt-0.5">
-                {t('tapDayHint')}
-              </p>
+            <div className="border-b-2 border-[var(--brown)] pb-1.5 flex items-center justify-between">
+              <div>
+                <h2 className="text-xs font-black tracking-widest text-[var(--brown-dark)] uppercase">
+                  {t('sec_training')}
+                </h2>
+                <p className="text-[11px] font-semibold text-[var(--muted)] mt-0.5">
+                  {t('tapDayHint')}
+                </p>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-black text-[var(--brown-dark)] bg-[var(--cream)] px-2.5 py-1 rounded-full border border-[var(--border)]">
+                <Dumbbell size={12} className="text-[var(--brown)]" />
+                <span>
+                  {currentDayLifts.filter((l) => l.name?.trim()).length}{' '}
+                  {language === 'th' ? 'ท่าที่บันทึกแล้ว' : 'exercises'}
+                </span>
+              </div>
             </div>
 
             {/* Day tabs */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {dayLabels.map((d) => {
                 const rawLifts = data.training?.[d.key];
                 const count = Array.isArray(rawLifts)
-                  ? rawLifts.filter((s) => s && (s?.name || s?.weight || s?.reps)).length
+                  ? rawLifts.filter(
+                      (s) =>
+                        s &&
+                        (s.name?.trim() ||
+                          s.weight ||
+                          s.reps ||
+                          (s.sets && s.sets.some((st) => st && (st.weight !== null || st.reps !== null))))
+                    ).length
                   : 0;
                 const isActive = activeDayKey === d.key;
 
@@ -786,9 +888,9 @@ export default function CheckinPage() {
                     key={d.key}
                     type="button"
                     onClick={() => setActiveDayKey(d.key)}
-                    className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
+                    className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       isActive
-                        ? 'border-[var(--brown-dark)] bg-[var(--brown-dark)] text-white'
+                        ? 'border-[var(--brown-dark)] bg-[var(--brown-dark)] text-white shadow-xs'
                         : 'border-[var(--border)] bg-[var(--paper-light)] text-[var(--muted)] hover:bg-[var(--cream-soft)]'
                     }`}
                   >
@@ -796,7 +898,9 @@ export default function CheckinPage() {
                     {count > 0 && (
                       <span
                         className={`rounded-full px-1.5 py-0.2 text-[9px] font-black ${
-                          isActive ? 'bg-white text-[var(--brown-dark)]' : 'bg-[var(--cream)] text-[var(--brown-dark)]'
+                          isActive
+                            ? 'bg-white text-[var(--brown-dark)]'
+                            : 'bg-[var(--cream)] text-[var(--brown-dark)]'
                         }`}
                       >
                         {count}
@@ -807,54 +911,170 @@ export default function CheckinPage() {
               })}
             </div>
 
-            {/* Column Header Labels */}
-            <div className="flex items-center gap-1.5 px-0.5 text-[10px] font-black uppercase tracking-wider text-[var(--muted)]">
-              <span className="w-4 shrink-0 text-center">#</span>
-              <span className="flex-1 min-w-0 pl-1">{t('liftName')}</span>
-              <span className="w-16 sm:w-20 shrink-0 text-center">กก. (kg)</span>
-              <span className="w-14 sm:w-16 shrink-0 text-center">ครั้ง (reps)</span>
-            </div>
-
-            {/* Lift rows (up to 10) */}
-            <div className="space-y-1.5">
-              {Array.from({ length: 10 }, (_, i) => {
-                const lift = currentDayLifts[i] || { name: '', weight: null, reps: null };
+            {/* Exercises List for active day */}
+            <div className="space-y-3.5">
+              {currentDayLifts.map((exercise, exIdx) => {
+                const sets =
+                  exercise.sets && exercise.sets.length > 0
+                    ? exercise.sets
+                    : [{ weight: exercise.weight ?? null, reps: exercise.reps ?? null }];
 
                 return (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <span className="w-4 shrink-0 text-center text-[10px] font-black text-[var(--muted)]">
-                      {i + 1}
-                    </span>
-                    <input
-                      type="text"
-                      className="flex-1 min-w-0 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-2.5 py-1.5 text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
-                      placeholder={t('liftName')}
-                      value={lift.name || ''}
-                      onChange={(e) => updateLift(i, 'name', e.target.value)}
-                    />
-                    <input
-                      type="number"
-                      step="0.5"
-                      className="w-16 sm:w-20 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-1 py-1.5 text-center text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
-                      placeholder="kg"
-                      value={lift.weight ?? ''}
-                      onChange={(e) =>
-                        updateLift(i, 'weight', e.target.value === '' ? null : Number(e.target.value))
-                      }
-                    />
-                    <input
-                      type="number"
-                      className="w-14 sm:w-16 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--paper-light)] px-1 py-1.5 text-center text-xs text-[var(--text)] outline-none focus:border-[var(--brown)]"
-                      placeholder="reps"
-                      value={lift.reps ?? ''}
-                      onChange={(e) =>
-                        updateLift(i, 'reps', e.target.value === '' ? null : Number(e.target.value))
-                      }
-                    />
+                  <div
+                    key={exIdx}
+                    className="rounded-2xl border border-[var(--border)] bg-[var(--paper-light)] p-3 sm:p-4 space-y-3 shadow-xs transition-all hover:border-[var(--brown)]/40"
+                  >
+                    {/* Exercise Card Header */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[var(--brown-dark)] text-white text-xs font-black shadow-xs">
+                        #{exIdx + 1}
+                      </div>
+
+                      <div className="relative flex-1 min-w-0">
+                        <input
+                          type="text"
+                          className="w-full rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-xs sm:text-sm font-bold text-[var(--brown-dark)] placeholder:text-[var(--muted)]/50 placeholder:font-normal outline-none focus:border-[var(--brown)] focus:ring-1 focus:ring-[var(--brown)]/20 transition-all"
+                          placeholder={
+                            language === 'th'
+                              ? 'ระบุชื่อท่าฝึก (เช่น Bench Press, Squat, Lat Pulldown)'
+                              : 'Exercise name (e.g. Bench Press)'
+                          }
+                          value={exercise.name || ''}
+                          onChange={(e) => updateExerciseName(exIdx, e.target.value)}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeExercise(exIdx)}
+                        title={language === 'th' ? 'ลบท่านี้' : 'Delete exercise'}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[var(--muted)] hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+
+                    {/* Sets Table */}
+                    <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white">
+                      {/* Table Header */}
+                      <div className="grid grid-cols-12 gap-1.5 bg-[var(--cream-soft)] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[var(--muted)] border-b border-[var(--border)]">
+                        <div className="col-span-2 text-center">SET</div>
+                        <div className="col-span-4 text-center">กก. (KG)</div>
+                        <div className="col-span-4 text-center">ครั้ง (REPS)</div>
+                        <div className="col-span-2 text-center"></div>
+                      </div>
+
+                      {/* Sets Rows */}
+                      <div className="divide-y divide-[var(--border)]/60">
+                        {sets.map((st, sIdx) => (
+                          <div
+                            key={sIdx}
+                            className="grid grid-cols-12 gap-1.5 items-center px-3 py-2 hover:bg-[var(--cream-soft)]/30 transition-colors"
+                          >
+                            {/* Set Number */}
+                            <div className="col-span-2 flex justify-center">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--cream)] text-[11px] font-black text-[var(--brown-dark)]">
+                                {sIdx + 1}
+                              </span>
+                            </div>
+
+                            {/* KG Input */}
+                            <div className="col-span-4">
+                              <div className="relative flex items-center">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  className="w-full rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-center text-xs font-bold text-[var(--text)] outline-none focus:border-[var(--brown)] focus:bg-[var(--cream-soft)]/20"
+                                  placeholder="0"
+                                  value={st.weight ?? ''}
+                                  onChange={(e) =>
+                                    updateSet(
+                                      exIdx,
+                                      sIdx,
+                                      'weight',
+                                      e.target.value === '' ? null : Number(e.target.value)
+                                    )
+                                  }
+                                />
+                                <span className="pointer-events-none absolute right-2 text-[10px] font-bold text-[var(--muted)] hidden min-[360px]:inline">
+                                  kg
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Reps Input */}
+                            <div className="col-span-4">
+                              <div className="relative flex items-center">
+                                <input
+                                  type="number"
+                                  step="1"
+                                  min="0"
+                                  className="w-full rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-center text-xs font-bold text-[var(--text)] outline-none focus:border-[var(--brown)] focus:bg-[var(--cream-soft)]/20"
+                                  placeholder="0"
+                                  value={st.reps ?? ''}
+                                  onChange={(e) =>
+                                    updateSet(
+                                      exIdx,
+                                      sIdx,
+                                      'reps',
+                                      e.target.value === '' ? null : Number(e.target.value)
+                                    )
+                                  }
+                                />
+                                <span className="pointer-events-none absolute right-2 text-[10px] font-bold text-[var(--muted)] hidden min-[360px]:inline">
+                                  reps
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Delete Set */}
+                            <div className="col-span-2 flex justify-center">
+                              {sets.length > 1 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => removeSet(exIdx, sIdx)}
+                                  className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--muted)] hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                  title={language === 'th' ? 'ลบเซ็ตนี้' : 'Delete set'}
+                                >
+                                  <X size={13} />
+                                </button>
+                              ) : (
+                                <span className="w-6" />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Add Set Button */}
+                    <div className="flex justify-start pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => addSet(exIdx)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--brown)]/60 bg-[var(--cream-soft)] px-3 py-1.5 text-xs font-black text-[var(--brown-dark)] hover:bg-[var(--cream)] hover:border-[var(--brown)] transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Plus size={13} />
+                        <span>{language === 'th' ? '+ เพิ่มเซ็ต' : '+ Add Set'}</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })}
             </div>
+
+            {/* Add Exercise Button */}
+            <button
+              type="button"
+              onClick={addExercise}
+              className="w-full rounded-2xl border-2 border-dashed border-[var(--brown)]/40 bg-[var(--cream-soft)]/50 py-3.5 flex items-center justify-center gap-2 text-xs sm:text-sm font-black text-[var(--brown-dark)] hover:bg-[var(--cream)] hover:border-[var(--brown)] transition-all cursor-pointer shadow-xs group"
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--brown-dark)] text-white group-hover:scale-110 transition-transform">
+                <Plus size={14} />
+              </div>
+              <span>{language === 'th' ? '+ เพิ่มท่าฝึก' : '+ Add Exercise'}</span>
+            </button>
           </div>
 
           {/* SECTION F: ACTIVITY & RECOVERY */}
