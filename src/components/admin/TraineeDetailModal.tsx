@@ -181,45 +181,98 @@ export function TraineeDetailModal({
 
       // 1. Try querying checkin_photos table first
       try {
-        const { data: photoRecords } = await supabase
+        const { data: photoRecords, error: photoErr } = await supabase
           .from('checkin_photos')
           .select('*')
           .eq('user_id', traineeId);
+
+        if (photoErr) {
+          console.warn('[Admin Modal] Error fetching checkin_photos table:', photoErr);
+        }
 
         if (photoRecords && photoRecords.length > 0) {
           for (const rec of photoRecords) {
             const w = rec.week;
             for (const view of views) {
-              const photoPath = rec[`photo_${view}_url` as keyof typeof rec] as string | undefined;
+              // Supports front_path, photo_front_url, or view name
+              const photoPath = (
+                rec[`${view}_path` as keyof typeof rec] ||
+                rec[`photo_${view}_url` as keyof typeof rec] ||
+                (rec as any)[view]
+              ) as string | undefined;
+
               if (photoPath) {
-                const { data } = await supabase.storage
+                // If it's already an absolute HTTP/HTTPS URL
+                if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+                  urls[`${w}_${view}`] = photoPath;
+                  continue;
+                }
+
+                // Request signed URL for private bucket
+                const { data, error } = await supabase.storage
                   .from('progress-photos')
                   .createSignedUrl(photoPath, 3600);
+
                 if (data?.signedUrl) {
                   urls[`${w}_${view}`] = data.signedUrl;
+                } else {
+                  if (error) {
+                    console.warn(`[Admin Modal] Storage signedUrl failed for ${photoPath}:`, error.message);
+                  }
+                  // Fallback: in case bucket is public
+                  const { data: pubData } = supabase.storage
+                    .from('progress-photos')
+                    .getPublicUrl(photoPath);
+                  if (pubData?.publicUrl) {
+                    urls[`${w}_${view}`] = pubData.publicUrl;
+                  }
                 }
               }
             }
           }
         }
-      } catch {
-        // Ignore if checkin_photos table not yet migrated
+      } catch (err) {
+        console.warn('[Admin Modal] checkin_photos table query exception:', err);
       }
 
-      // 2. Scan all 16 weeks from checkins
+      // 2. Scan all 16 weeks from checkins JSON data
       for (const c of traineeCheckins) {
         const w = c.week;
         const padWeek = String(w).padStart(2, '0');
         const cPhotos = c.data?.photos;
 
-        for (const view of views) {
-          if (cPhotos?.[view] && !urls[`${w}_${view}`]) {
-            const path = `${trainee?.id}/week-${padWeek}/${view}.jpg`;
-            const { data } = await supabase.storage
-              .from('progress-photos')
-              .createSignedUrl(path, 3600);
-            if (data?.signedUrl) {
-              urls[`${w}_${view}`] = data.signedUrl;
+        if (cPhotos) {
+          for (const view of views) {
+            if (cPhotos[view] && !urls[`${w}_${view}`]) {
+              const val: any = (cPhotos as any)[view];
+              if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'))) {
+                urls[`${w}_${view}`] = val;
+                continue;
+              }
+
+              const path =
+                typeof val === 'string' && val.includes('/')
+                  ? val
+                  : `${traineeId}/week-${padWeek}/${view}.jpg`;
+
+              const { data, error } = await supabase.storage
+                .from('progress-photos')
+                .createSignedUrl(path, 3600);
+
+              if (data?.signedUrl) {
+                urls[`${w}_${view}`] = data.signedUrl;
+              } else {
+                if (error) {
+                  console.warn(`[Admin Modal] Checkins storage signedUrl failed for ${path}:`, error.message);
+                }
+                // Fallback: in case bucket is public
+                const { data: pubData } = supabase.storage
+                  .from('progress-photos')
+                  .getPublicUrl(path);
+                if (pubData?.publicUrl) {
+                  urls[`${w}_${view}`] = pubData.publicUrl;
+                }
+              }
             }
           }
         }
