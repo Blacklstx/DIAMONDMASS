@@ -188,13 +188,136 @@ label.field .label-text{
 .activity-row .txt span{ display:block; font-size:12px; color:var(--muted); margin-top:1px; }
 .activity-row .mult{ margin-left:auto; font-size:12.5px; color:var(--brown); font-weight:700; flex-shrink:0; }
 
-.bf-toggle{
-  display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted);
-  margin-top:-6px; margin-bottom:16px;
+.bf-card{
+  border:1px solid var(--line);
+  background:var(--paper);
+  padding:16px 18px;
+  margin-top:6px;
+  margin-bottom:18px;
+  border-left:4px solid var(--brown);
 }
-.bf-toggle input[type="checkbox"]{ width:15px; height:15px; accent-color:var(--brown); }
-#bfFieldWrap{ display:none; }
-#bfFieldWrap.show{ display:block; }
+.bf-card-head{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:12px; gap:8px; flex-wrap:wrap;
+}
+.bf-card-title{
+  font-size:13.5px; font-weight:800; color:var(--brown-dark);
+}
+.bf-formula-badge{
+  font-size:10.5px; font-weight:700; background:var(--cream);
+  color:var(--brown-dark); padding:3px 10px; border:1px solid var(--line);
+  border-radius:9999px; letter-spacing:0.02em; transition:all 0.2s;
+}
+.bf-body{
+  display:flex; gap:16px; align-items:flex-start;
+}
+@media (max-width:580px){
+  .bf-body{ flex-direction:column-reverse; align-items:center; }
+  .bf-input-col{ width:100%; }
+}
+.bf-input-col{ flex:1; min-width:0; }
+.bf-preview-col{ flex-shrink:0; width:120px; }
+.bf-preview-card{
+  background:var(--paper-light); border:1px solid var(--line);
+  padding:6px; text-align:center; cursor:pointer;
+  transition:border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.bf-preview-card:hover{
+  border-color:var(--brown); transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(51,39,30,0.1);
+}
+.bf-preview-img-wrap{
+  width:100%; height:138px; display:flex; align-items:center;
+  justify-content:center; background:#EDE7D9; overflow:hidden;
+  border-bottom:1px solid var(--line); margin-bottom:6px;
+}
+.bf-preview-img-wrap img{
+  width:100%; height:100%; object-fit:cover; display:block;
+  transition:opacity 0.2s;
+}
+.bf-preview-tag{
+  font-size:11.5px; font-weight:800; color:var(--brown-dark);
+}
+.bf-preview-hint{
+  font-size:9.5px; color:var(--muted); margin-top:2px;
+}
+.bf-chip-group{ margin-top:10px; margin-bottom:10px; }
+.bf-chip-title{
+  display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:6px;
+}
+.bf-chips{ display:flex; flex-wrap:wrap; gap:5px; }
+.bf-chip{
+  background:var(--paper-light); border:1px solid var(--line);
+  color:var(--text); font:inherit; font-size:11px; font-weight:600;
+  padding:4px 8px; cursor:pointer; transition:all 0.15s;
+}
+.bf-chip:hover{ background:var(--cream); border-color:var(--brown); }
+.bf-chip[aria-pressed="true"]{
+  background:var(--brown); color:var(--paper-light); border-color:var(--brown); font-weight:700;
+}
+.btn-gallery{
+  display:inline-flex; align-items:center; gap:6px; background:var(--paper-light);
+  border:1px dashed var(--brown); color:var(--brown); font:inherit; font-size:11px;
+  font-weight:700; padding:6px 10px; cursor:pointer; margin-top:4px;
+  transition:background 0.15s;
+}
+.btn-gallery:hover{ background:var(--cream); }
+.bf-helper-text{
+  font-size:11.5px; line-height:1.5; color:var(--muted); margin-top:8px;
+}
+.bf-female-note{
+  font-size:11px; color:var(--rust); margin-top:10px; padding-top:8px;
+  border-top:1px dashed var(--line); line-height:1.5;
+}
+
+/* Modal styles for full gallery */
+.bf-modal-backdrop{
+  position:fixed; inset:0; background:rgba(31,28,24,0.72);
+  display:none; align-items:center; justify-content:center;
+  z-index:9999; padding:16px; backdrop-filter:blur(3px);
+}
+.bf-modal-backdrop.open{ display:flex; }
+.bf-modal{
+  background:var(--paper-light); border:1px solid var(--line);
+  max-width:640px; width:100%; max-height:90vh; overflow-y:auto;
+  box-shadow:0 12px 36px rgba(0,0,0,0.28); display:flex; flex-direction:column;
+}
+.bf-modal-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 20px; border-bottom:1px solid var(--line);
+  background:var(--paper); position:sticky; top:0; z-index:2;
+}
+.bf-modal-title{ font-size:15px; font-weight:800; color:var(--brown-dark); }
+.bf-modal-close{
+  background:transparent; border:none; font-size:20px; line-height:1;
+  color:var(--muted); cursor:pointer; padding:4px 8px; font-weight:700;
+}
+.bf-modal-close:hover{ color:var(--brown-dark); }
+.bf-modal-body{ padding:18px 20px; }
+.bf-gallery-grid{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;
+}
+@media (max-width:480px){
+  .bf-gallery-grid{ grid-template-columns:repeat(2, 1fr); }
+}
+.bf-gallery-card{
+  border:2px solid var(--line); background:var(--paper); padding:6px;
+  text-align:center; cursor:pointer; transition:all 0.15s;
+}
+.bf-gallery-card:hover{
+  border-color:var(--brown); transform:translateY(-2px);
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+.bf-gallery-card.selected{
+  border-color:var(--brown); background:var(--cream-soft);
+  box-shadow:0 0 0 1px var(--brown);
+}
+.bf-gallery-card img{
+  width:100%; height:130px; object-fit:cover; display:block; margin-bottom:5px;
+  border-bottom:1px solid var(--line);
+}
+.bf-gallery-label{ font-size:12.5px; font-weight:800; color:var(--brown-dark); }
+.bf-gallery-desc{ font-size:10px; color:var(--muted); line-height:1.3; margin-top:2px; }
 
 .formula-note{
   font-size:12px; color:var(--muted); border-top:1px dashed var(--line); padding-top:12px;
@@ -316,7 +439,7 @@ label.field .label-text{
           <label class="field">
             <span class="label-text">อายุ</span>
             <div class="input-num">
-              <input type="number" id="age" inputmode="numeric" min="10" max="90" value="25">
+              <input type="number" id="age" inputmode="numeric" min="10" max="90" placeholder="25">
               <span class="unit">ปี</span>
             </div>
           </label>
@@ -326,31 +449,77 @@ label.field .label-text{
           <label class="field">
             <span class="label-text" id="heightLabel">ส่วนสูง</span>
             <div class="input-num">
-              <input type="number" id="height" inputmode="decimal" min="100" max="230" value="170">
+              <input type="number" id="height" inputmode="decimal" min="100" max="230" placeholder="170">
               <span class="unit" id="heightUnit">ซม.</span>
             </div>
           </label>
           <label class="field">
             <span class="label-text" id="weightLabel">น้ำหนัก</span>
             <div class="input-num">
-              <input type="number" id="weight" inputmode="decimal" min="30" max="200" value="65">
+              <input type="number" id="weight" inputmode="decimal" min="30" max="200" placeholder="65">
               <span class="unit" id="weightUnit">กก.</span>
             </div>
           </label>
         </div>
 
-        <div class="bf-toggle">
-          <input type="checkbox" id="bfToggle">
-          <label for="bfToggle">รู้เปอร์เซ็นต์ไขมัน — ใช้สูตร Katch-McArdle แม่นกว่าสำหรับคนที่กล้ามเยอะ</label>
-        </div>
-        <div id="bfFieldWrap">
-          <label class="field">
-            <span class="label-text">เปอร์เซ็นต์ไขมันร่างกาย</span>
-            <div class="input-num">
-              <input type="number" id="bodyfat" inputmode="decimal" min="3" max="60" value="20">
-              <span class="unit">%</span>
+        <!-- BODY FAT CARD -->
+        <div class="bf-card">
+          <div class="bf-card-head">
+            <span class="bf-card-title">เปอร์เซ็นต์ไขมันในร่างกาย (Body Fat %)</span>
+            <span class="bf-formula-badge" id="bfFormulaBadge">สูตร Katch-McArdle</span>
+          </div>
+
+          <div class="bf-body">
+            <div class="bf-input-col">
+              <label class="field" style="margin-bottom:8px;">
+                <span class="label-text">กรอกเปอร์เซ็นต์ไขมัน (% ไขมันของคุณ)</span>
+                <div class="input-num">
+                  <input type="number" id="bodyfat" inputmode="decimal" min="3" max="60" placeholder="20">
+                  <span class="unit">%</span>
+                </div>
+              </label>
+
+              <div class="bf-chip-group">
+                <span class="bf-chip-title">เลือกระดับตามภาพตัวอย่าง:</span>
+                <div class="bf-chips" id="bfChips">
+                  <button type="button" class="bf-chip" data-bf="4">3–4%</button>
+                  <button type="button" class="bf-chip" data-bf="7">6–7%</button>
+                  <button type="button" class="bf-chip" data-bf="11">10–12%</button>
+                  <button type="button" class="bf-chip" data-bf="15">15%</button>
+                  <button type="button" class="bf-chip" data-bf="20" aria-pressed="true">20%</button>
+                  <button type="button" class="bf-chip" data-bf="25">25%</button>
+                  <button type="button" class="bf-chip" data-bf="30">30%</button>
+                  <button type="button" class="bf-chip" data-bf="35">35%</button>
+                  <button type="button" class="bf-chip" data-bf="40">40%+</button>
+                </div>
+              </div>
+
+              <div>
+                <button type="button" id="btnOpenGallery" class="btn-gallery">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span>ดูตารางเทียบภาพทั้งหมด (Visual Chart)</span>
+                </button>
+              </div>
+
+              <div class="bf-helper-text" id="bfDescText">
+                คำนวณ BMR จากมวลกล้ามเนื้อ (LBM) โดยตรง แม่นยำขึ้นสำหรับคนออกกำลังกาย
+              </div>
             </div>
-          </label>
+
+            <div class="bf-preview-col">
+              <div class="bf-preview-card" id="bfPreviewTrigger" title="คลิกเพื่อดูตารางเทียบภาพทั้งหมด">
+                <div class="bf-preview-img-wrap">
+                  <img id="bfPreviewImg" src="/images/bodyfat/male_20.jpg" alt="หุ่นตัวอย่างเปอร์เซ็นต์ไขมัน 20%">
+                </div>
+                <div class="bf-preview-tag" id="bfPreviewTag">~20% Body Fat</div>
+                <div class="bf-preview-hint">คลิกดูตารางเทียบภาพ</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="femaleNote" class="bf-female-note" style="display:none;">
+            💡 ภาพอ้างอิงชุดนี้เป็นสรีระเพศชาย สำหรับผู้หญิงสัดส่วนไขมันธรรมชาติจะสูงกว่าประมาณ 8–10%
+          </div>
         </div>
       </div>
 
@@ -386,7 +555,7 @@ label.field .label-text{
             <span class="mult">×1.90</span>
           </button>
         </div>
-        <p class="formula-note">BMR คำนวณด้วยสูตร Mifflin-St Jeor เป็นค่าเริ่มต้น (หรือ Katch-McArdle ถ้าติ๊กเปอร์เซ็นต์ไขมันด้านบน) แล้วคูณด้วยตัวเลขกิจกรรมเพื่อได้ TDEE</p>
+        <p class="formula-note">BMR คำนวณด้วยสูตร Katch-McArdle (เมื่อระบุเปอร์เซ็นต์ไขมัน) หรือ Mifflin-St Jeor (เมื่อไม่ระบุ) แล้วคูณด้วยตัวเลขกิจกรรมเพื่อได้ TDEE</p>
       </div>
 
     </div>
@@ -400,7 +569,7 @@ label.field .label-text{
       </div>
 
       <div class="bmr-row">
-        <span class="m-label">อัตราเผาผลาญพื้นฐาน<small>BMR — พลังงานที่ใช้แม้นอนนิ่งทั้งวัน</small></span>
+        <span class="m-label">อัตราเผาผลาญพื้นฐาน<small id="bmrSub">BMR — พลังงานที่ใช้แม้นอนนิ่งทั้งวัน</small></span>
         <span class="m-val"><span id="bmrOut">0</span> kcal</span>
       </div>
 
@@ -452,6 +621,27 @@ label.field .label-text{
 
 </div>
 
+<!-- BODY FAT GALLERY MODAL -->
+<div id="bfModal" class="bf-modal-backdrop" aria-hidden="true">
+  <div class="bf-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="bf-modal-header">
+      <div>
+        <h3 id="modalTitle" class="bf-modal-title">ตารางเทียบเปอร์เซ็นต์ไขมันร่างกาย</h3>
+        <p style="font-size:11.5px; color:var(--muted); margin-top:2px;">คลิกที่ภาพเพื่อเลือกค่าเปอร์เซ็นต์ไขมันลงในฟอร์มทันที</p>
+      </div>
+      <button type="button" id="bfModalClose" class="bf-modal-close" aria-label="ปิด">✕</button>
+    </div>
+    <div class="bf-modal-body">
+      <div class="bf-gallery-grid" id="bfGalleryGrid">
+        <!-- Rendered dynamically by JavaScript based on sex -->
+      </div>
+      <div style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--line); font-size:11.5px; color:var(--muted); text-align:center;">
+        * ภาพอ้างอิงสร้างขึ้นตามสรีระและสัดส่วนไขมันธรรมชาติของแต่ละเพศเพื่อใช้เป็นแนวทางประมาณการ
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -462,12 +652,78 @@ label.field .label-text{
   const CM_PER_IN = 2.54;
   const KG_PER_LB = 0.45359237;
 
+  const BF_MALE_DATA = [
+    { max: 5,    val: 4,  file: 'male_3_4.jpg',   label: '3–4%',   desc: 'ลีนระดับประกวดเพาะกาย เส้นเลือดและมัดกล้ามชัดเจนมาก' },
+    { max: 8.5,  val: 7,  file: 'male_6_7.jpg',   label: '6–7%',   desc: 'ลีนมาก ลายกล้ามท้องและมัดกล้ามเนื้อคมชัดทุกจุด' },
+    { max: 13,   val: 11, file: 'male_10_12.jpg', label: '10–12%', desc: 'ระดับนายแบบ (Fitness Model) กล้ามท้อง 6-pack ชัด รูปร่างสมส่วน' },
+    { max: 17.5, val: 15, file: 'male_15.jpg',    label: '15%',    desc: 'ลีนสุขภาพดี มองเห็นโครงสร้างกล้ามท้อง รูปร่างกระชับ' },
+    { max: 22.5, val: 20, file: 'male_20.jpg',    label: '20%',    desc: 'รูปร่างมาตรฐานทั่วไป หน้าท้องเรียบ กล้ามเนื้อพอมีโครงสร้าง' },
+    { max: 27.5, val: 25, file: 'male_25.jpg',    label: '25%',    desc: 'เริ่มมีไขมันสะสมรอบเอวและหน้าท้อง มัดกล้ามไม่คมชัด' },
+    { max: 32.5, val: 30, file: 'male_30.jpg',    label: '30%',    desc: 'มีไขมันส่วนเกินชัดเจนบริเวณหน้าท้อง พุง และสะโพก' },
+    { max: 37.5, val: 35, file: 'male_35.jpg',    label: '35%',    desc: 'ไขมันสะสมหนาแน่น รอบเอวและหน้าท้องยื่นชัดเจน' },
+    { max: 100,  val: 40, file: 'male_40.jpg',    label: '40%+',   desc: 'ไขมันสะสมสูงมาก ควรเน้นคุมอาหารและออกกำลังกายสม่ำเสมอ' },
+  ];
+
+  const BF_FEMALE_DATA = [
+    { max: 13.5, val: 11, file: 'female_10_12.jpg', label: '10–12%', desc: 'ลีนระดับนักกีฬาเพาะกาย ไขมันจำเป็นระดับต่ำมาก' },
+    { max: 18.5, val: 16, file: 'female_15_17.jpg', label: '15–17%', desc: 'ระดับนักกีฬา (Athletic) ลายกล้ามท้องและกล้ามเนื้อคมชัด' },
+    { max: 23.5, val: 21, file: 'female_20_22.jpg', label: '20–22%', desc: 'ลีนสุขภาพดี (Fitness) รูปร่างเฟิร์มกระชับ มองเห็นแนวกล้ามท้อง' },
+    { max: 27.5, val: 25, file: 'female_25.jpg',    label: '25%',    desc: 'รูปร่างมาตรฐานสมส่วน สุขภาพดี หน้าท้องแบนราบ' },
+    { max: 32.5, val: 30, file: 'female_30.jpg',    label: '30%',    desc: 'รูปร่างทั่วไป เริ่มมีไขมันสะสมรอบเอว สะโพก และต้นขา' },
+    { max: 37.5, val: 35, file: 'female_35.jpg',    label: '35%',    desc: 'มีไขมันสะสมบริเวณหน้าท้องและสะโพกชัดเจน' },
+    { max: 42.5, val: 40, file: 'female_40.jpg',    label: '40%',    desc: 'ไขมันสะสมหนาแน่น สัดส่วนรอบเอวและสะโพกขยาย' },
+    { max: 47.5, val: 45, file: 'female_45.jpg',    label: '45%',    desc: 'ไขมันสะสมสูง ควรเน้นปรับโภชนาการและกิจกรรมกาย' },
+    { max: 100,  val: 50, file: 'female_50.jpg',    label: '50%+',   desc: 'ไขมันสะสมสูงมาก ควรเน้นดูแลสุขภาพ ออกกำลังกายสม่ำเสมอ' },
+  ];
+
+  function getBfList() {
+    return sex === 'female' ? BF_FEMALE_DATA : BF_MALE_DATA;
+  }
+
+  function getBfItem(val) {
+    const list = getBfList();
+    if (!val || val <= 0) return null;
+    return list.find(item => val <= item.max) || list[list.length - 1];
+  }
+
   const els = {
     age: $('age'), height: $('height'), weight: $('weight'),
-    bfToggle: $('bfToggle'), bfWrap: $('bfFieldWrap'), bodyfat: $('bodyfat'),
+    bodyfat: $('bodyfat'),
     heightLabel: $('heightLabel'), heightUnit: $('heightUnit'),
     weightLabel: $('weightLabel'), weightUnit: $('weightUnit'),
+    bfFormulaBadge: $('bfFormulaBadge'),
+    bfDescText: $('bfDescText'),
+    bfPreviewImg: $('bfPreviewImg'),
+    bfPreviewTag: $('bfPreviewTag'),
+    femaleNote: $('femaleNote'),
+    bmrSub: $('bmrSub'),
+    bfModal: $('bfModal'),
   };
+
+  function renderChips() {
+    const list = getBfList();
+    const container = $('bfChips');
+    if (!container) return;
+    container.innerHTML = list.map(item =>
+      `<button type="button" class="bf-chip" data-bf="${item.val}">${item.label}</button>`
+    ).join('');
+  }
+
+  function renderGallery() {
+    const list = getBfList();
+    const container = $('bfGalleryGrid');
+    if (!container) return;
+    container.innerHTML = list.map(item => `
+      <div class="bf-gallery-card" data-bf="${item.val}">
+        <img src="/images/bodyfat/${item.file}" alt="${item.label}">
+        <div class="bf-gallery-label">${item.label}</div>
+        <div class="bf-gallery-desc">${item.desc}</div>
+      </div>
+    `).join('');
+    if ($('modalTitle')) {
+      $('modalTitle').textContent = `ตารางเทียบเปอร์เซ็นต์ไขมันร่างกาย (${sex === 'female' ? 'เพศหญิง' : 'เพศชาย'})`;
+    }
+  }
 
   document.getElementById('unitToggle').addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-unit]');
@@ -475,14 +731,13 @@ label.field .label-text{
     const newUnit = btn.dataset.unit;
     if (newUnit === unit) return;
 
-    let h = parseFloat(els.height.value) || 0;
-    let w = parseFloat(els.weight.value) || 0;
-    if (unit === 'metric' && newUnit === 'imperial') {
-      els.height.value = Math.round(h / CM_PER_IN);
-      els.weight.value = Math.round(w / KG_PER_LB);
-    } else if (unit === 'imperial' && newUnit === 'metric') {
-      els.height.value = Math.round(h * CM_PER_IN);
-      els.weight.value = Math.round(w * KG_PER_LB);
+    let h = parseFloat(els.height.value);
+    let w = parseFloat(els.weight.value);
+    if (!isNaN(h) && h > 0) {
+      els.height.value = newUnit === 'imperial' ? Math.round(h / CM_PER_IN) : Math.round(h * CM_PER_IN);
+    }
+    if (!isNaN(w) && w > 0) {
+      els.weight.value = newUnit === 'imperial' ? Math.round(w / KG_PER_LB) : Math.round(w * KG_PER_LB);
     }
     unit = newUnit;
     document.querySelectorAll('#unitToggle button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
@@ -490,6 +745,8 @@ label.field .label-text{
     els.heightUnit.textContent = unit === 'metric' ? 'ซม.' : 'นิ้ว';
     els.weightLabel.textContent = 'น้ำหนัก';
     els.weightUnit.textContent = unit === 'metric' ? 'กก.' : 'ปอนด์';
+    els.height.placeholder = unit === 'metric' ? '170' : '67';
+    els.weight.placeholder = unit === 'metric' ? '65' : '143';
     compute();
   });
 
@@ -498,6 +755,9 @@ label.field .label-text{
     if (!btn) return;
     sex = btn.dataset.sex;
     document.querySelectorAll('#sexSeg button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+    els.bodyfat.placeholder = sex === 'female' ? '25' : '20';
+    renderChips();
+    renderGallery();
     compute();
   });
 
@@ -509,9 +769,52 @@ label.field .label-text{
     compute();
   });
 
-  els.bfToggle.addEventListener('change', () => {
-    els.bfWrap.classList.toggle('show', els.bfToggle.checked);
+  // Body fat chips quick select (delegated)
+  document.getElementById('bfChips').addEventListener('click', (e) => {
+    const btn = e.target.closest('.bf-chip');
+    if (!btn) return;
+    els.bodyfat.value = btn.dataset.bf;
     compute();
+  });
+
+  // Modal open / close
+  function openBfModal() {
+    if (!els.bfModal) return;
+    renderGallery();
+    els.bfModal.classList.add('open');
+    els.bfModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeBfModal() {
+    if (!els.bfModal) return;
+    els.bfModal.classList.remove('open');
+    els.bfModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  $('btnOpenGallery').addEventListener('click', openBfModal);
+  $('bfPreviewTrigger').addEventListener('click', openBfModal);
+  $('bfModalClose').addEventListener('click', closeBfModal);
+  els.bfModal.addEventListener('click', (e) => {
+    if (e.target === els.bfModal) closeBfModal();
+  });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && els.bfModal.classList.contains('open')) closeBfModal();
+  });
+
+  document.getElementById('bfGalleryGrid').addEventListener('click', (e) => {
+    const card = e.target.closest('.bf-gallery-card');
+    if (!card) return;
+    els.bodyfat.value = card.dataset.bf;
+    closeBfModal();
+    compute();
+  });
+
+  // Auto-select text on focus so user can type immediately without deleting
+  document.querySelectorAll('.input-num input').forEach(input => {
+    input.addEventListener('focus', function () {
+      this.select();
+    });
   });
 
   ['age','height','weight','bodyfat'].forEach(id => { $(id).addEventListener('input', compute); });
@@ -520,22 +823,74 @@ label.field .label-text{
   function toKg(v) { return unit === 'metric' ? v : v * KG_PER_LB; }
   function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
 
+  function updateBfVisual(val, hasTypedBf) {
+    const defaultVal = sex === 'female' ? 25 : 20;
+    const item = getBfItem(val) || getBfItem(defaultVal);
+    if (!item) return;
+
+    els.bfPreviewImg.src = '/images/bodyfat/' + item.file;
+    els.bfPreviewImg.style.opacity = '1';
+    els.bfPreviewTag.textContent = '~' + item.label + ' Body Fat' + (hasTypedBf ? '' : ' (ตัวอย่าง)');
+    els.bfDescText.textContent = item.desc;
+
+    // Highlight active chip
+    document.querySelectorAll('.bf-chip').forEach(btn => {
+      const chipVal = parseFloat(btn.dataset.bf);
+      btn.setAttribute('aria-pressed', (hasTypedBf && item.val === chipVal) ? 'true' : 'false');
+    });
+
+    // Highlight card in modal
+    document.querySelectorAll('.bf-gallery-card').forEach(card => {
+      const cardVal = parseFloat(card.dataset.bf);
+      if (item.val === cardVal) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
+    });
+  }
+
   function compute() {
-    const age = parseFloat(els.age.value) || 0;
-    const heightCm = toCm(parseFloat(els.height.value) || 0);
-    const weightKg = toKg(parseFloat(els.weight.value) || 0);
-    const useBF = els.bfToggle.checked;
-    const bf = parseFloat(els.bodyfat.value) || 0;
+    const defaultAge = 25;
+    const defaultHeight = unit === 'metric' ? 170 : 67;
+    const defaultWeight = unit === 'metric' ? 65 : 143;
+    const defaultBf = sex === 'female' ? 25 : 20;
+
+    const age = parseFloat(els.age.value) || defaultAge;
+    const heightCm = toCm(parseFloat(els.height.value) || defaultHeight);
+    const weightKg = toKg(parseFloat(els.weight.value) || defaultWeight);
+
+    const rawBf = parseFloat(els.bodyfat.value);
+    const hasTypedBf = !isNaN(rawBf) && els.bodyfat.value.trim() !== '';
+    const effectiveBf = hasTypedBf ? rawBf : defaultBf;
+    const useKatch = effectiveBf > 0 && effectiveBf <= 70;
 
     let bmr;
-    if (useBF && bf > 0) {
-      const lbm = weightKg * (1 - bf / 100);
+    if (useKatch) {
+      const lbm = weightKg * (1 - effectiveBf / 100);
       bmr = 370 + 21.6 * lbm;
+      if (els.bfFormulaBadge) {
+        els.bfFormulaBadge.textContent = hasTypedBf ? 'สูตร Katch-McArdle (LBM)' : `สูตร Katch-McArdle (ค่าตัวอย่าง ${defaultBf}%)`;
+        els.bfFormulaBadge.style.background = 'var(--cream)';
+        els.bfFormulaBadge.style.color = 'var(--brown-dark)';
+      }
+      if (els.bmrSub) {
+        els.bmrSub.textContent = hasTypedBf ? 'BMR — คำนวณด้วยสูตร Katch-McArdle (ตาม % ไขมัน)' : `BMR — คำนวณด้วยสูตร Katch-McArdle (ตามค่าตัวอย่าง ${defaultBf}%)`;
+      }
     } else {
       bmr = sex === 'male'
         ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
         : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+      if (els.bfFormulaBadge) {
+        els.bfFormulaBadge.textContent = 'สูตร Mifflin-St Jeor (มาตรฐาน)';
+        els.bfFormulaBadge.style.background = 'var(--cream-soft)';
+        els.bfFormulaBadge.style.color = 'var(--muted)';
+      }
+      if (els.bmrSub) {
+        els.bmrSub.textContent = 'BMR — คำนวณด้วยสูตร Mifflin-St Jeor (มาตรฐาน)';
+      }
     }
+
     bmr = Math.max(bmr, 0);
     const tdee = bmr * activityMult;
 
@@ -553,6 +908,8 @@ label.field .label-text{
     applyMacros('cut', cutKcal, weightKg, 'cut');
     applyMacros('m', maintainKcal, weightKg, 'maintain');
     applyMacros('b', bulkKcal, weightKg, 'bulk');
+
+    updateBfVisual(effectiveBf, hasTypedBf);
   }
 
   function applyMacros(prefix, kcal, weightKg, barId) {
@@ -578,6 +935,8 @@ label.field .label-text{
     }
   }
 
+  renderChips();
+  renderGallery();
   compute();
 })();
 </script>
